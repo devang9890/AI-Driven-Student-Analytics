@@ -58,3 +58,36 @@ def add_lms_activity(
     db.commit()
     db.refresh(activity)
     return activity
+
+from app.services.feature_engineering import (
+    calculate_attendance_percentage,
+    calculate_average_marks,
+    calculate_lms_score
+)
+
+from app.services.risk_service import get_risk_hint
+
+
+@router.get("/summary/{student_id}")
+def student_summary(
+    student_id: int,
+    db: Session = Depends(get_db)
+):
+    attendance_pct = calculate_attendance_percentage(db, student_id)
+    avg_marks = calculate_average_marks(db, student_id)
+    lms_score = calculate_lms_score(db, student_id)
+
+    risk_hint = get_risk_hint(
+        attendance_pct,
+        avg_marks,
+        lms_score
+    )
+
+    return {
+        "student_id": student_id,
+        "attendance_percentage": attendance_pct,
+        "average_marks": avg_marks,
+        "lms_score": lms_score,
+        "risk_hint": risk_hint
+    }
+
