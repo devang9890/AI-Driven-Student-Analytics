@@ -1,28 +1,24 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.student import Student
+from app.schemas.student import StudentCreate, StudentResponse
 
 router = APIRouter(prefix="/students", tags=["Students"])
 
-@router.post("/")
+@router.post("/", response_model=StudentResponse)
 def create_student(
-    name: str,
-    department: str,
-    year: int,
+    student: StudentCreate,
     db: Session = Depends(get_db)
 ):
-    student = Student(
-        name=name,
-        department=department,
-        year=year
-    )
-    db.add(student)
+    db_student = Student(**student.dict())
+    db.add(db_student)
     db.commit()
-    db.refresh(student)
-    return student
+    db.refresh(db_student)
+    return db_student
 
 
-@router.get("/")
+@router.get("/", response_model=list[StudentResponse])
 def get_students(db: Session = Depends(get_db)):
     return db.query(Student).all()
