@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Database
 from app.database import engine, Base
 
+
 # Import ALL models so SQLAlchemy registers them before create_all
 from app.models import (
     student,
@@ -50,6 +51,7 @@ app.add_middleware(
 app.include_router(student_routes.router)
 app.include_router(analytics_routes.router)
 app.include_router(prediction_routes.router)
+
 
 # --------------------------------------------------
 # Root Health Check
