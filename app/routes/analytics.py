@@ -91,3 +91,24 @@ def student_summary(
         "risk_hint": risk_hint
     }
 
+from app.services.decline_service import (
+    detect_attendance_decline,
+    detect_marks_decline
+)
+
+
+@router.get("/decline/{student_id}")
+def performance_decline(
+    student_id: int,
+    db: Session = Depends(get_db)
+):
+    attendance_decline = detect_attendance_decline(db, student_id)
+    marks_decline = detect_marks_decline(db, student_id)
+
+    return {
+        "student_id": student_id,
+        "attendance_decline": attendance_decline,
+        "marks_decline": marks_decline,
+        "overall_decline": attendance_decline or marks_decline
+    }
+
