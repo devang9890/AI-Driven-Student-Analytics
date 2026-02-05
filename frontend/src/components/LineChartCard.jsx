@@ -9,8 +9,8 @@ import {
 
 export default function LineChartCard({ title, data, dataKey }) {
   return (
-    <div className="bg-white p-4 rounded-xl shadow">
-      <h3 className="font-semibold mb-3">{title}</h3>
+    <div className="glass-card p-5 rounded-2xl">
+      <h3 className="font-semibold text-gray-900 mb-3">{title}</h3>
 
       <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">

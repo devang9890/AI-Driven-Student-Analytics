@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
 
 const severityStyles = {
-  HIGH: "bg-red-100 text-red-700",
-  MEDIUM: "bg-yellow-100 text-yellow-700",
-  LOW: "bg-blue-100 text-blue-700",
+  HIGH: "bg-red-50 text-red-700 border-red-200",
+  MEDIUM: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  LOW: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
 const timeAgo = (dateStr) => {
@@ -55,14 +55,17 @@ const Alerts = () => {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Alerts</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
+          <p className="text-gray-600">Prioritize critical student interventions</p>
+        </div>
         <div className="text-sm text-gray-600">
-          Unread: <span className="font-semibold">{unreadCount}</span>
+          Unread: <span className="font-semibold text-gray-900">{unreadCount}</span>
         </div>
       </div>
 
       {alerts.length === 0 ? (
-        <div className="bg-white p-6 rounded-xl shadow text-gray-600">
+        <div className="glass-card p-6 rounded-2xl text-gray-600">
           No alerts found.
         </div>
       ) : (
@@ -70,14 +73,14 @@ const Alerts = () => {
           {alerts.map((alert) => (
             <div
               key={alert._id}
-              className={`bg-white p-4 rounded-xl shadow flex items-center justify-between ${
+              className={`glass-card p-5 rounded-2xl flex items-center justify-between ${
                 alert.is_read ? "opacity-70" : ""
               }`}
             >
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    className={`px-2 py-1 rounded-full text-xs font-semibold border ${
                       severityStyles[alert.severity] || "bg-gray-100 text-gray-700"
                     }`}
                   >
@@ -87,14 +90,14 @@ const Alerts = () => {
                     {timeAgo(alert.created_at)}
                   </p>
                 </div>
-                <p className="font-semibold">{alert.student_name}</p>
+                <p className="font-semibold text-gray-900">{alert.student_name}</p>
                 <p className="text-sm text-gray-600">{alert.message}</p>
               </div>
 
               {!alert.is_read && (
                 <button
                   onClick={() => markRead(alert._id)}
-                  className="text-blue-600 text-sm font-semibold"
+                  className="text-blue-700 text-sm font-semibold"
                 >
                   Mark Read
                 </button>

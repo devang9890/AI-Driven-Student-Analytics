@@ -53,22 +53,25 @@ const ExcelUpload = () => {
 
   return (
     <AdminLayout>
-      <h2 className="text-3xl font-bold mb-6">Excel Upload</h2>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-gray-900">Excel Upload</h2>
+        <p className="text-gray-600">Bulk import and generate risk predictions</p>
+      </div>
 
-      <div className="bg-white p-6 rounded-xl shadow max-w-2xl">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded mb-6">
-          <h3 className="font-semibold mb-2">📋 Excel Format (Dynamic Subjects)</h3>
+      <div className="glass-card p-6 rounded-2xl max-w-3xl">
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+          <h3 className="font-semibold mb-2">Excel Format (Dynamic Subjects)</h3>
           <p className="text-sm text-gray-700 mb-2">
             Your Excel must have these columns:
           </p>
-          <code className="block bg-gray-100 p-2 rounded text-xs mb-2">
+          <code className="block bg-white p-2 rounded text-xs mb-2 border border-blue-100">
             name, attendance, behaviour, fees_paid, subject, marks
           </code>
           <p className="text-sm text-gray-700 mb-2">
             <strong>Multiple rows per student</strong> for different subjects:
           </p>
-          <table className="text-xs border w-full">
-            <thead className="bg-gray-100">
+          <table className="text-xs border w-full rounded overflow-hidden">
+            <thead className="bg-blue-100">
               <tr>
                 <th className="border p-1">name</th>
                 <th className="border p-1">attendance</th>
@@ -78,7 +81,7 @@ const ExcelUpload = () => {
                 <th className="border p-1">marks</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white">
               <tr>
                 <td className="border p-1">Rahul</td>
                 <td className="border p-1">75</td>
@@ -119,14 +122,14 @@ const ExcelUpload = () => {
         {/* Visible button to open explorer */}
         <button
           onClick={openFilePicker}
-          className="bg-gray-200 px-6 py-3 rounded w-full mb-4"
+          className="bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg w-full mb-4 border border-gray-200 transition"
         >
           Select Excel File
         </button>
 
         {/* show selected file */}
         {file && (
-          <p className="text-green-600 mb-4">
+          <p className="text-emerald-600 mb-4 text-sm">
             Selected file: <strong>{file.name}</strong>
           </p>
         )}
@@ -135,7 +138,7 @@ const ExcelUpload = () => {
         <button
           onClick={handleUpload}
           disabled={uploading}
-          className="bg-blue-600 text-white px-6 py-3 rounded w-full"
+          className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-6 py-3 rounded-lg w-full shadow hover:shadow-lg transition disabled:opacity-60"
         >
           {uploading ? "Uploading..." : "Upload & Predict"}
         </button>

@@ -74,40 +74,43 @@ const Analytics = () => {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Analytics</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+        <p className="text-gray-600">Population trends and predictive insights</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-red-50 p-6 rounded-2xl shadow-md">
-          <p className="text-sm text-red-600">High Risk</p>
-          <p className="text-2xl font-semibold">{riskCounts.high}</p>
+        <div className="bg-gradient-to-br from-red-50 to-rose-100 p-6 rounded-2xl shadow-md border border-red-100">
+          <p className="text-sm text-red-700">High Risk</p>
+          <p className="text-3xl font-semibold text-red-700">{riskCounts.high}</p>
         </div>
-        <div className="bg-yellow-50 p-6 rounded-2xl shadow-md">
-          <p className="text-sm text-yellow-600">Medium Risk</p>
-          <p className="text-2xl font-semibold">{riskCounts.medium}</p>
+        <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl shadow-md border border-yellow-100">
+          <p className="text-sm text-yellow-700">Medium Risk</p>
+          <p className="text-3xl font-semibold text-yellow-700">{riskCounts.medium}</p>
         </div>
-        <div className="bg-green-50 p-6 rounded-2xl shadow-md">
-          <p className="text-sm text-green-600">Low Risk</p>
-          <p className="text-2xl font-semibold">{riskCounts.low}</p>
+        <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-6 rounded-2xl shadow-md border border-green-100">
+          <p className="text-sm text-green-700">Low Risk</p>
+          <p className="text-3xl font-semibold text-green-700">{riskCounts.low}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h3 className="font-semibold mb-4">Average Scores</h3>
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Average Scores</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={scoresBar}>
                 <XAxis dataKey="name" />
                 <YAxis domain={[0, 100]} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h3 className="font-semibold mb-4">Average Risk Probability</h3>
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Average Risk Probability</h3>
           <div className="relative h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
@@ -124,14 +127,14 @@ const Analytics = () => {
               </RadialBarChart>
             </ResponsiveContainer>
             <div className="absolute text-center">
-              <p className="text-2xl font-bold">{avgScores.probability.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-gray-900">{avgScores.probability.toFixed(1)}%</p>
               <p className="text-xs text-gray-500">Avg Probability</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h3 className="font-semibold mb-4">Risk Distribution</h3>
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Risk Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

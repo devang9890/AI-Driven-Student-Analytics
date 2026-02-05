@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@layer components {
+	.glass-card {
+		@apply bg-white/75 backdrop-blur-xl border border-white/60 shadow-xl;
+	}
+
+	.glass-panel {
+		@apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg;
+	}
+
+	.glass-elevated {
+		@apply bg-white/85 backdrop-blur-2xl border border-white/70 shadow-2xl;
+	}
+}

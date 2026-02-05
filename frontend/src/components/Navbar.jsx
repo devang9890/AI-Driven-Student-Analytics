@@ -21,28 +21,29 @@ export default function Navbar() {
   }, []);
 
   const linkStyle = (path) =>
-    `px-4 py-2 rounded-lg ${
+    `px-4 py-2 rounded-lg text-sm font-medium transition-all ${
       location.pathname === path
-        ? "bg-blue-600 text-white"
-        : "text-gray-700 hover:bg-gray-200"
+        ? "bg-blue-700 text-white"
+        : "text-gray-700 hover:bg-gray-100"
     }`;
 
   return (
-    <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
-      <h1 className="text-lg font-bold text-blue-600">
-        StudentRisk Dashboard
-      </h1>
+    <nav className="glass-panel border-b border-white/40 px-6 py-3 flex justify-between items-center">
+      <div>
+        <h1 className="text-lg font-bold text-gray-900">RiskSense</h1>
+        <p className="text-xs text-gray-500">Education Analytics Portal</p>
+      </div>
 
-      <div className="flex gap-3">
-        <Link to="/portal/students" className={linkStyle("/portal/students")}> 
+      <div className="flex gap-2">
+        <Link to="/portal/students" className={linkStyle("/portal/students")}>
           Students
         </Link>
 
-        <Link to="/portal/analytics" className={linkStyle("/portal/analytics")}> 
+        <Link to="/portal/analytics" className={linkStyle("/portal/analytics")}>
           Analytics
         </Link>
 
-        <Link to="/portal/alerts" className={linkStyle("/portal/alerts")}> 
+        <Link to="/portal/alerts" className={linkStyle("/portal/alerts")}>
           <span className="flex items-center gap-2">
             Alerts
             {unreadCount > 0 && (

@@ -142,13 +142,13 @@ export default function StudentDetail() {
   if (!student) return <p className="p-6">Loading student data...</p>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-8">
       {/* Header Card */}
-      <div className="bg-white p-6 rounded-2xl shadow-md mb-8">
+      <div className="glass-card p-6 rounded-2xl mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{student.name}</h2>
-            <p className="text-gray-500">University Academic Analytics</p>
+            <p className="text-gray-500">RiskSense Education Analytics</p>
           </div>
           <RiskBadge risk={student.risk_level} />
         </div>
@@ -163,15 +163,15 @@ export default function StudentDetail() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
             <p className="text-sm text-gray-500">Attendance</p>
             <p className="text-xl font-semibold">{student.attendance}%</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
             <p className="text-sm text-gray-500">Average Marks</p>
             <p className="text-xl font-semibold">{avgMarks.toFixed(1)}</p>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
             <p className="text-sm text-gray-500">Behaviour</p>
             <p className="text-xl font-semibold">{student.behaviour}</p>
           </div>
@@ -181,7 +181,7 @@ export default function StudentDetail() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Subject-wise Bar Chart */}
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="glass-card rounded-2xl p-6">
           <h3 className="font-semibold mb-4">Subject-wise Performance</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -196,7 +196,7 @@ export default function StudentDetail() {
         </div>
 
         {/* Confidence Score Gauge */}
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="glass-card rounded-2xl p-6">
           <h3 className="font-semibold mb-4">Confidence Score</h3>
           <div className="relative h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -223,13 +223,13 @@ export default function StudentDetail() {
 
       {/* Weak Subject Alert */}
       {weakSubjects.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-8">
-          <h3 className="font-semibold text-red-700 mb-2">⚠ Weak Subjects Detected</h3>
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 mb-8">
+          <h3 className="font-semibold text-rose-700 mb-2">⚠ Weak Subjects Detected</h3>
           <div className="flex gap-2 flex-wrap">
             {weakSubjects.map((s) => (
               <span
                 key={s.subject_name}
-                className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm"
+                className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm"
               >
                 {s.subject_name}: {s.marks}
               </span>
@@ -239,11 +239,11 @@ export default function StudentDetail() {
       )}
 
       {/* Subject Manager */}
-      <div className="bg-white rounded-2xl shadow-md p-6">
+      <div className="glass-card rounded-2xl p-6">
         <h3 className="font-semibold mb-4">Manage Subjects</h3>
 
         {/* Add New Subject */}
-        <div className="bg-gray-50 p-4 rounded-xl mb-6">
+        <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
           <h4 className="font-semibold text-sm mb-3">Add New Subject</h4>
           <div className="flex gap-2">
             <input
@@ -252,7 +252,7 @@ export default function StudentDetail() {
               onChange={(e) =>
                 setNewSubject({ ...newSubject, subject_name: e.target.value })
               }
-              className="flex-1 p-2 border rounded"
+              className="flex-1 p-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none"
             />
             <input
               placeholder="Marks"
@@ -261,11 +261,11 @@ export default function StudentDetail() {
               onChange={(e) =>
                 setNewSubject({ ...newSubject, marks: e.target.value })
               }
-              className="w-24 p-2 border rounded"
+              className="w-24 p-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none"
             />
             <button
               onClick={handleAddSubject}
-              className="bg-green-600 text-white px-4 py-2 rounded"
+              className="bg-gradient-to-r from-emerald-600 to-green-700 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
             >
               + Add
             </button>
@@ -277,7 +277,7 @@ export default function StudentDetail() {
           {subjects.map((subject) => (
             <div
               key={subject.subject_name}
-              className="flex items-center justify-between bg-gray-50 p-3 rounded-xl"
+              className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100"
             >
               <div className="flex-1">
                 <p className="font-semibold">{subject.subject_name}</p>
@@ -288,7 +288,7 @@ export default function StudentDetail() {
                   <input
                     type="number"
                     defaultValue={subject.marks}
-                    className="w-20 p-1 border rounded"
+                    className="w-20 p-1 border border-gray-300 rounded-lg"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleUpdateSubject(subject.subject_name, e.target.value);
@@ -298,7 +298,7 @@ export default function StudentDetail() {
                   />
                   <button
                     onClick={() => setEditingSubject(null)}
-                    className="text-gray-500 text-sm"
+                    className="text-gray-500 text-sm font-medium"
                   >
                     Cancel
                   </button>
@@ -308,13 +308,13 @@ export default function StudentDetail() {
                   <p className="font-bold text-lg">{subject.marks}</p>
                   <button
                     onClick={() => setEditingSubject(subject.subject_name)}
-                    className="text-blue-600 text-sm"
+                    className="text-blue-700 text-sm font-medium"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDeleteSubject(subject.subject_name)}
-                    className="text-red-600 text-sm"
+                    className="text-red-600 text-sm font-medium"
                   >
                     Delete
                   </button>
@@ -326,28 +326,28 @@ export default function StudentDetail() {
       </div>
 
       {/* Faculty Notes */}
-      <div className="bg-white rounded-2xl shadow-md p-6 mt-8">
+      <div className="glass-card rounded-2xl p-6 mt-8">
         <h3 className="font-semibold mb-4">Faculty Notes</h3>
 
-        <div className="bg-gray-50 p-4 rounded-xl mb-6">
+        <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
             <input
               value={noteAuthor}
               onChange={(e) => setNoteAuthor(e.target.value)}
               placeholder="Author"
-              className="p-2 border rounded md:col-span-1"
+              className="p-2 border border-gray-300 rounded-lg md:col-span-1"
             />
             <textarea
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder="Write a note..."
-              className="p-2 border rounded md:col-span-3"
+              className="p-2 border border-gray-300 rounded-lg md:col-span-3"
               rows={2}
             />
           </div>
           <button
             onClick={handleAddNote}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
           >
             Add Note
           </button>
@@ -358,12 +358,12 @@ export default function StudentDetail() {
         ) : (
           <div className="space-y-4">
             {notes.map((note) => (
-              <div key={note._id} className="border-l-4 border-blue-500 pl-4">
+              <div key={note._id} className="border-l-4 border-blue-600 pl-4">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold">{note.author}</p>
                   <button
                     onClick={() => handleDeleteNote(note._id)}
-                    className="text-red-500 text-sm"
+                    className="text-red-600 text-sm font-medium"
                   >
                     Delete
                   </button>

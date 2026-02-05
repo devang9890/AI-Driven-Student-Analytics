@@ -37,39 +37,62 @@ const Students = () => {
 
   return (
     <AdminLayout>
-      <h2 className="text-3xl font-bold mb-6">Students</h2>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-gray-900">Students</h2>
+        <p className="text-gray-600">Manage profiles and risk categories</p>
+      </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
-        <button onClick={() => fetchStudents()} className="bg-gray-200 px-4 py-2 rounded">
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button
+          onClick={() => fetchStudents()}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+            filter === "" ? "bg-blue-700 text-white border-blue-700" : "bg-white text-gray-700 border-gray-200 hover:border-blue-400"
+          }`}
+        >
           All
         </button>
 
-        <button onClick={() => fetchStudents("HIGH RISK")} className="bg-red-500 text-white px-4 py-2 rounded">
+        <button
+          onClick={() => fetchStudents("HIGH RISK")}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+            filter === "HIGH RISK" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700 border-gray-200 hover:border-red-400"
+          }`}
+        >
           High Risk
         </button>
 
-        <button onClick={() => fetchStudents("MEDIUM RISK")} className="bg-yellow-500 text-white px-4 py-2 rounded">
+        <button
+          onClick={() => fetchStudents("MEDIUM RISK")}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+            filter === "MEDIUM RISK" ? "bg-yellow-500 text-white border-yellow-500" : "bg-white text-gray-700 border-gray-200 hover:border-yellow-400"
+          }`}
+        >
           Medium Risk
         </button>
 
-        <button onClick={() => fetchStudents("LOW RISK")} className="bg-green-500 text-white px-4 py-2 rounded">
+        <button
+          onClick={() => fetchStudents("LOW RISK")}
+          className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+            filter === "LOW RISK" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-700 border-gray-200 hover:border-green-400"
+          }`}
+        >
           Low Risk
         </button>
       </div>
 
       {/* Student Table */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3">Subjects</th>
-              <th className="p-3">Avg Marks</th>
-              <th className="p-3">Attendance</th>
-              <th className="p-3">Behaviour</th>
-              <th className="p-3">Risk</th>
-              <th className="p-3">Action</th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600">Name</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Subjects</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Avg Marks</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Attendance</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Behaviour</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Risk</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">Action</th>
             </tr>
           </thead>
 
@@ -79,22 +102,22 @@ const Students = () => {
               const avgMarks = student.average_marks || student.marks || 0;
 
               return (
-                <tr key={student._id} className="border-t">
-                  <td className="p-3">{student.name}</td>
-                  <td className="p-3 text-center">{subjectCount}</td>
-                  <td className="p-3 text-center">{avgMarks.toFixed(1)}</td>
-                  <td className="p-3 text-center">{student.attendance}</td>
-                  <td className="p-3 text-center">{student.behaviour}</td>
-                  <td className="p-3 text-center font-bold">
+                <tr key={student._id} className="border-t hover:bg-gray-50 transition">
+                  <td className="p-4 font-medium text-gray-900">{student.name}</td>
+                  <td className="p-4 text-center text-gray-700">{subjectCount}</td>
+                  <td className="p-4 text-center text-gray-700">{avgMarks.toFixed(1)}</td>
+                  <td className="p-4 text-center text-gray-700">{student.attendance}</td>
+                  <td className="p-4 text-center text-gray-700">{student.behaviour}</td>
+                  <td className="p-4 text-center font-semibold text-gray-900">
                     {student.risk_level}{" "}
                     {student.risk_probability
                       ? `(${student.risk_probability.toFixed(1)}%)`
                       : ""}
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-4 text-center">
                     <button
                       onClick={() => deleteStudent(student._id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      className="bg-gradient-to-r from-red-500 to-rose-600 text-white px-3 py-1.5 rounded-lg text-sm shadow hover:shadow-md transition"
                     >
                       Delete
                     </button>
