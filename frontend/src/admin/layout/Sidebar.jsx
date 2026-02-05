@@ -1,0 +1,25 @@
+import { Link } from "react-router-dom";
+
+const Sidebar = () => {
+  return (
+    <div className="w-64 h-screen bg-gray-900 text-white p-5 fixed left-0 top-0">
+      <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
+
+      <nav className="flex flex-col gap-4">
+        <Link to="/admin/dashboard" className="hover:text-blue-400">
+          Dashboard
+        </Link>
+
+        <Link to="/admin/manual-entry" className="hover:text-blue-400">
+          Manual Entry
+        </Link>
+
+        <Link to="/admin/excel-upload" className="hover:text-blue-400">
+          Excel Upload
+        </Link>
+      </nav>
+    </div>
+  );
+};
+
+export default Sidebar;
