@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AdminLayout from "../layout/AdminLayout";
-import axios from "axios";
+import api from "../../api/axios";
 
 const ManualEntry = () => {
   const [form, setForm] = useState({
@@ -73,10 +73,7 @@ const ManualEntry = () => {
         subjects: subjects,
       };
 
-      const res = await axios.post(
-        "http://localhost:8000/admin/add-student",
-        payload
-      );
+      const res = await api.post("/admin/add-student", payload);
 
       const riskLabel = res?.data?.risk_level ?? "N/A";
       const probability = res?.data?.probability ?? 0;

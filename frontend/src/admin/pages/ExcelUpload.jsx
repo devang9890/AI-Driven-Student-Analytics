@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import axios from "axios";
+import api from "../../api/axios";
 import AdminLayout from "../layout/AdminLayout";
 
 const ExcelUpload = () => {
@@ -31,15 +31,11 @@ const ExcelUpload = () => {
     try {
       setUploading(true);
 
-      await axios.post(
-        "http://localhost:8000/admin/upload-excel",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await api.post("/admin/upload-excel", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       alert("Upload successful!");
       setFile(null);

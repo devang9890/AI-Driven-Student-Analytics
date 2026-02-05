@@ -7,7 +7,8 @@ const Topbar = () => {
         className="bg-red-500 text-white px-4 py-2 rounded"
         onClick={() => {
           localStorage.removeItem("admin");
-          window.location.href = "/admin";
+          localStorage.removeItem("access_token");
+          window.location.href = "/login";
         }}
       >
         Logout

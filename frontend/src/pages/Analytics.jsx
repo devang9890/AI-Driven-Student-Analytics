@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import {
   BarChart,
   Bar,
@@ -22,7 +22,7 @@ const Analytics = () => {
   }, []);
 
   const fetchStudents = async () => {
-    const res = await axios.get("http://localhost:8000/admin/all-students");
+    const res = await api.get("/admin/all-students");
     setStudents(res.data);
   };
 

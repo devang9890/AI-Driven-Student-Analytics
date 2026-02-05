@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 export default function Sidebar() {
   const location = useLocation();
@@ -9,7 +9,7 @@ export default function Sidebar() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/alerts");
+        const res = await api.get("/alerts");
         const unread = (res.data || []).filter((a) => !a.is_read).length;
         setUnreadCount(unread);
       } catch (err) {
@@ -29,20 +29,18 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-white shadow h-screen fixed left-0 top-0 p-4">
-      <h1 className="text-xl font-bold text-blue-600 mb-6">
-        StudentRisk
-      </h1>
+      <h1 className="text-xl font-bold text-blue-600 mb-6">StudentRisk</h1>
 
       <nav>
-        <Link to="/" className={linkClass("/")}>
+        <Link to="/portal/students" className={linkClass("/portal/students")}>
           Students
         </Link>
 
-        <Link to="/analytics" className={linkClass("/analytics")}>
+        <Link to="/portal/analytics" className={linkClass("/portal/analytics")}>
           Analytics
         </Link>
 
-        <Link to="/alerts" className={linkClass("/alerts")}> 
+        <Link to="/portal/alerts" className={linkClass("/portal/alerts")}>
           <div className="flex items-center justify-between">
             <span>Alerts</span>
             {unreadCount > 0 && (

@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.database import get_db
 from app.db import alerts_collection
 from app.services.alert_service import check_student_alert
+from app.routes.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 
@@ -20,7 +21,7 @@ def check_alert(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("")
-async def get_all_alerts():
+async def get_all_alerts(_: dict = Depends(get_current_admin)):
     alerts = []
     cursor = alerts_collection.find().sort("created_at", -1)
     async for alert in cursor:
@@ -30,7 +31,7 @@ async def get_all_alerts():
 
 
 @router.get("/student/{student_id}")
-async def get_alerts_for_student(student_id: str):
+async def get_alerts_for_student(student_id: str, _: dict = Depends(get_current_admin)):
     alerts = []
     cursor = alerts_collection.find({"student_id": student_id}).sort("created_at", -1)
     async for alert in cursor:
@@ -40,7 +41,7 @@ async def get_alerts_for_student(student_id: str):
 
 
 @router.patch("/{alert_id}/read")
-async def mark_alert_read(alert_id: str):
+async def mark_alert_read(alert_id: str, _: dict = Depends(get_current_admin)):
     try:
         oid = ObjectId(alert_id)
     except Exception:

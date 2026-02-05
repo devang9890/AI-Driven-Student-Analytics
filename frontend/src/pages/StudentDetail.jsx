@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axios";
 import {
   BarChart,
   Bar,
@@ -24,7 +24,7 @@ export default function StudentDetail() {
 
   const fetchStudent = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/admin/student/${id}`);
+      const res = await api.get(`/admin/student/${id}`);
       setStudent(res.data);
     } catch (err) {
       console.error(err);
@@ -33,7 +33,7 @@ export default function StudentDetail() {
 
   const fetchNotes = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/students/${id}/notes`);
+      const res = await api.get(`/students/${id}/notes`);
       setNotes(res.data || []);
     } catch (err) {
       console.error(err);
@@ -70,7 +70,7 @@ export default function StudentDetail() {
     }
 
     try {
-      await axios.post(`http://localhost:8000/admin/add-subject/${id}`, {
+      await api.post(`/admin/add-subject/${id}`, {
         subject_name: newSubject.subject_name,
         marks: parseFloat(newSubject.marks),
       });
@@ -85,8 +85,8 @@ export default function StudentDetail() {
   // Update subject marks
   const handleUpdateSubject = async (subjectName, newMarks) => {
     try {
-      await axios.put(
-        `http://localhost:8000/admin/update-subject/${id}/${subjectName}?marks=${newMarks}`
+      await api.put(
+        `/admin/update-subject/${id}/${subjectName}?marks=${newMarks}`
       );
       setEditingSubject(null);
       fetchStudent();
@@ -101,8 +101,8 @@ export default function StudentDetail() {
     if (!window.confirm(`Delete ${subjectName}?`)) return;
 
     try {
-      await axios.delete(
-        `http://localhost:8000/admin/delete-subject/${id}/${subjectName}`
+      await api.delete(
+        `/admin/delete-subject/${id}/${subjectName}`
       );
       fetchStudent();
       alert("Subject deleted successfully");
@@ -118,7 +118,7 @@ export default function StudentDetail() {
     }
 
     try {
-      await axios.post(`http://localhost:8000/students/${id}/notes`, {
+      await api.post(`/students/${id}/notes`, {
         author: noteAuthor,
         content: noteContent.trim(),
       });
@@ -132,7 +132,7 @@ export default function StudentDetail() {
   const handleDeleteNote = async (noteId) => {
     if (!window.confirm("Delete this note?")) return;
     try {
-      await axios.delete(`http://localhost:8000/notes/${noteId}`);
+      await api.delete(`/notes/${noteId}`);
       setNotes((prev) => prev.filter((n) => n._id !== noteId));
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to delete note");

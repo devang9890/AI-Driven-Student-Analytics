@@ -6,7 +6,7 @@ const Sidebar = () => {
       <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
 
       <nav className="flex flex-col gap-4">
-        <Link to="/admin/dashboard" className="hover:text-blue-400">
+        <Link to="/admin" className="hover:text-blue-400">
           Dashboard
         </Link>
 
@@ -14,7 +14,7 @@ const Sidebar = () => {
           Manual Entry
         </Link>
 
-        <Link to="/admin/excel-upload" className="hover:text-blue-400">
+        <Link to="/admin/excel" className="hover:text-blue-400">
           Excel Upload
         </Link>
 
@@ -22,7 +22,7 @@ const Sidebar = () => {
           Students
         </Link>
 
-        <Link to="/alerts" className="hover:text-blue-400">
+        <Link to="/admin/alerts" className="hover:text-blue-400">
           Alerts
         </Link>
       </nav>

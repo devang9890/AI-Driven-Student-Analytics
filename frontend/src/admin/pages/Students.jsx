@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../api/axios";
 import AdminLayout from "../layout/AdminLayout";
 
 const Students = () => {
@@ -7,7 +7,7 @@ const Students = () => {
   const [filter, setFilter] = useState("");
 
   const fetchStudents = async (risk = "") => {
-    let url = "http://localhost:8000/admin/students";
+    let url = "/admin/students";
 
     if (risk) {
       url += `?risk=${risk}`;
@@ -16,7 +16,7 @@ const Students = () => {
       setFilter("");
     }
 
-    const res = await axios.get(url);
+    const res = await api.get(url);
     setStudents(res.data);
   };
 
@@ -24,7 +24,7 @@ const Students = () => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
 
     try {
-      await axios.delete(`http://localhost:8000/admin/delete-student/${id}`);
+      await api.delete(`/admin/delete-student/${id}`);
       fetchStudents();
     } catch (err) {
       alert("Delete failed");

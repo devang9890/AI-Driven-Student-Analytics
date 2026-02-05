@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 const severityStyles = {
   HIGH: "bg-red-100 text-red-700",
@@ -25,7 +25,7 @@ const Alerts = () => {
 
   const fetchAlerts = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/alerts");
+      const res = await api.get("/alerts");
       setAlerts(res.data || []);
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ const Alerts = () => {
 
   const markRead = async (id) => {
     try {
-      await axios.patch(`http://localhost:8000/alerts/${id}/read`);
+      await api.patch(`/alerts/${id}/read`);
       setAlerts((prev) =>
         prev.map((a) => (a._id === id ? { ...a, is_read: true } : a))
       );

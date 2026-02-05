@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
-import AdminLayout from "../layout/AdminLayout";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -18,7 +17,8 @@ const AdminLogin = () => {
       const res = await api.post("/admin/login", { email, password });
       // store minimal admin info
       localStorage.setItem("admin", JSON.stringify(res.data.admin));
-      navigate("/admin/dashboard");
+      localStorage.setItem("access_token", res.data.access_token);
+      navigate("/admin");
     } catch (err) {
       setError(
         err?.response?.data?.detail || "Login failed. Check credentials and try again."
@@ -29,8 +29,8 @@ const AdminLogin = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <div className="max-w-md w-full bg-white p-6 rounded-xl shadow">
         <h2 className="text-2xl font-bold mb-4">Admin Login</h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
@@ -63,7 +63,7 @@ const AdminLogin = () => {
           </button>
         </form>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

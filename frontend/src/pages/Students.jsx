@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import { Link } from "react-router-dom";
 import RiskBadge from "../components/RiskBadge";
 
@@ -12,7 +12,7 @@ const Students = () => {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/admin/all-students");
+      const res = await api.get("/admin/all-students");
       setStudents(res.data);
     } catch (err) {
       console.error(err);
@@ -31,7 +31,7 @@ const Students = () => {
           return (
             <Link
               key={student._id}
-              to={`/student/${student._id}`}
+              to={`/portal/students/${student._id}`}
               className="bg-white shadow-md rounded-2xl p-5 hover:shadow-lg transition"
             >
               <div className="flex items-start justify-between mb-3">

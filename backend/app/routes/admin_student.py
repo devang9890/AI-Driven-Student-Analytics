@@ -1,8 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from bson import ObjectId
 from pydantic import BaseModel
 from typing import List, Optional
 from app.db import students_collection, alerts_collection, db
+from app.routes.admin_auth import get_current_admin
 from app.services.alert_service import generate_alerts_for_student
 import pandas as pd
 from io import BytesIO
@@ -31,7 +32,7 @@ def _load_model():
 
 _load_model()
 
-router = APIRouter(prefix="/admin", tags=["Admin Student"])
+router = APIRouter(prefix="/admin", tags=["Admin Student"], dependencies=[Depends(get_current_admin)])
 
 
 # NEW: Subject schema

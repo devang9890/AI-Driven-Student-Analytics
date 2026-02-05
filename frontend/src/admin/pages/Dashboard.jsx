@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import AdminLayout from "../layout/AdminLayout";
+import api from "../../api/axios";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({});
   const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/admin/stats").then((res) => setStats(res.data));
-    axios.get("http://localhost:8000/alerts").then((res) => setAlerts(res.data));
+    api.get("/admin/stats").then((res) => setStats(res.data));
+    api.get("/alerts").then((res) => setAlerts(res.data));
   }, []);
 
   const highRiskToday = useMemo(() => {
@@ -46,7 +46,7 @@ const Dashboard = () => {
           <h3 className="text-2xl font-bold mt-2">{stats.low_risk}</h3>
         </div>
 
-        <Link to="/alerts" className="bg-red-50 p-6 rounded-xl shadow hover:shadow-md transition">
+        <Link to="/admin/alerts" className="bg-red-50 p-6 rounded-xl shadow hover:shadow-md transition">
           <div className="text-sm text-red-600">🔥 High Risk Alerts Today</div>
           <h3 className="text-2xl font-bold mt-2">{highRiskToday}</h3>
         </Link>
@@ -67,6 +67,13 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      <Link
+        to="/portal"
+        className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full px-6 py-3 shadow-lg hover:bg-blue-700"
+      >
+        Show Analytics →
+      </Link>
     </AdminLayout>
   );
 };

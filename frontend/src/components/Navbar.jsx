@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 export default function Navbar() {
   const location = useLocation();
@@ -9,7 +9,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/alerts");
+        const res = await api.get("/alerts");
         const unread = (res.data || []).filter((a) => !a.is_read).length;
         setUnreadCount(unread);
       } catch (err) {
@@ -34,15 +34,15 @@ export default function Navbar() {
       </h1>
 
       <div className="flex gap-3">
-        <Link to="/" className={linkStyle("/")}>
+        <Link to="/portal/students" className={linkStyle("/portal/students")}> 
           Students
         </Link>
 
-        <Link to="/analytics" className={linkStyle("/analytics")}>
+        <Link to="/portal/analytics" className={linkStyle("/portal/analytics")}> 
           Analytics
         </Link>
 
-        <Link to="/alerts" className={linkStyle("/alerts")}> 
+        <Link to="/portal/alerts" className={linkStyle("/portal/alerts")}> 
           <span className="flex items-center gap-2">
             Alerts
             {unreadCount > 0 && (

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from bson import ObjectId
 from datetime import datetime
 
 from app.db import notes_collection
+from app.routes.admin_auth import get_current_admin
 
-router = APIRouter(tags=["Notes"])
+router = APIRouter(tags=["Notes"], dependencies=[Depends(get_current_admin)])
 
 
 @router.post("/students/{student_id}/notes")
