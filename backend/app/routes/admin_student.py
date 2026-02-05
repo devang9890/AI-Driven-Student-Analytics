@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from app.db import students_collection
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(prefix="/admin", tags=["Admin Student"])
 
 
-class AddStudentRequest(BaseModel):
+class StudentInput(BaseModel):
 	name: str
 	attendance: float
 	marks: float
@@ -12,37 +13,48 @@ class AddStudentRequest(BaseModel):
 	fees_paid: bool
 
 
-def _predict_risk(attendance: float, marks: float, behaviour: float, fees_paid: bool):
-	# Simple heuristic (no ML dependency): weighted score + penalty for unpaid fees
-	score = 0.4 * attendance + 0.4 * marks + 0.2 * behaviour
-	if not fees_paid:
-		score -= 10
-	score = max(0.0, min(100.0, score))
+def predict_risk(data: StudentInput):
+	score = (data.attendance + data.marks + data.behaviour) / 3
 
-	if score < 50:
-		risk = "HIGH"
+	if score < 40:
+		return "HIGH RISK"
 	elif score < 70:
-		risk = "MEDIUM"
+		return "MEDIUM RISK"
 	else:
-		risk = "LOW"
-
-	return {
-		"score": round(score, 2),
-		"risk": risk,
-	}
+		return "LOW RISK"
 
 
 @router.post("/add-student")
-def add_student(data: AddStudentRequest):
-	# No DB per requirements; return computed risk and echo input
-	pred = _predict_risk(
-		data.attendance,
-		data.marks,
-		data.behaviour,
-		data.fees_paid,
-	)
+async def add_student(data: StudentInput):
+	risk = predict_risk(data)
+
+	student_doc = {
+		"name": data.name,
+		"attendance": data.attendance,
+		"marks": data.marks,
+		"behaviour": data.behaviour,
+		"fees_paid": data.fees_paid,
+		"risk_level": risk,
+	}
+
+	await students_collection.insert_one(student_doc)
+
 	return {
-		"status": "success",
-		"student": data.dict(),
-		"prediction": pred,
+		"message": "Student saved successfully",
+		"risk_level": risk,
+	}
+
+
+@router.get("/stats")
+async def get_dashboard_stats():
+	total_students = await students_collection.count_documents({})
+	high_risk = await students_collection.count_documents({"risk_level": "HIGH RISK"})
+	medium_risk = await students_collection.count_documents({"risk_level": "MEDIUM RISK"})
+	low_risk = await students_collection.count_documents({"risk_level": "LOW RISK"})
+
+	return {
+		"total_students": total_students,
+		"high_risk": high_risk,
+		"medium_risk": medium_risk,
+		"low_risk": low_risk,
 	}
