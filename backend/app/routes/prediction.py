@@ -7,7 +7,7 @@ from app.services.feature_engineering import (
     calculate_average_marks,
     calculate_lms_score
 )
-from app.ml.predictor import predict_risk
+from app.ml.predictor import predict_risk_with_confidence
 
 router = APIRouter(prefix="/prediction", tags=["Prediction"])
 
@@ -20,7 +20,7 @@ def predict_student_risk(
     avg_marks = calculate_average_marks(db, student_id)
     lms_score = calculate_lms_score(db, student_id)
 
-    predicted_risk = predict_risk(
+    predicted_risk, confidence_score = predict_risk_with_confidence(
         attendance_pct,
         avg_marks,
         lms_score
@@ -28,5 +28,6 @@ def predict_student_risk(
 
     return {
         "student_id": student_id,
-        "predicted_risk": predicted_risk
+        "predicted_risk": predicted_risk,
+        "confidence_score": confidence_score
     }

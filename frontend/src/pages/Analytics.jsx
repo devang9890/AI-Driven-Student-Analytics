@@ -38,7 +38,7 @@ const Analytics = () => {
     const totals = students.reduce(
       (acc, s) => {
         acc.attendance += Number(s.attendance || 0);
-        acc.marks += Number(s.marks || 0);
+        acc.marks += Number(s.average_marks || s.marks || 0);
         acc.behaviour += Number(s.behaviour || 0);
         acc.probability += Number(s.risk_probability ?? s.probability ?? 0);
         return acc;

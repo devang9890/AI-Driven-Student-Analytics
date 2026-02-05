@@ -64,8 +64,9 @@ const Students = () => {
           <thead className="bg-gray-100">
             <tr>
               <th className="p-3 text-left">Name</th>
+              <th className="p-3">Subjects</th>
+              <th className="p-3">Avg Marks</th>
               <th className="p-3">Attendance</th>
-              <th className="p-3">Marks</th>
               <th className="p-3">Behaviour</th>
               <th className="p-3">Risk</th>
               <th className="p-3">Action</th>
@@ -73,25 +74,34 @@ const Students = () => {
           </thead>
 
           <tbody>
-            {students.map((student) => (
-              <tr key={student._id} className="border-t">
-                <td className="p-3">{student.name}</td>
-                <td className="p-3 text-center">{student.attendance}</td>
-                <td className="p-3 text-center">{student.marks}</td>
-                <td className="p-3 text-center">{student.behaviour}</td>
-                <td className="p-3 text-center font-bold">
-                  {student.risk_level} {student.risk_probability ? `(${student.risk_probability.toFixed(1)}%)` : ""}
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    onClick={() => deleteStudent(student._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {students.map((student) => {
+              const subjectCount = student.subjects?.length || 0;
+              const avgMarks = student.average_marks || student.marks || 0;
+
+              return (
+                <tr key={student._id} className="border-t">
+                  <td className="p-3">{student.name}</td>
+                  <td className="p-3 text-center">{subjectCount}</td>
+                  <td className="p-3 text-center">{avgMarks.toFixed(1)}</td>
+                  <td className="p-3 text-center">{student.attendance}</td>
+                  <td className="p-3 text-center">{student.behaviour}</td>
+                  <td className="p-3 text-center font-bold">
+                    {student.risk_level}{" "}
+                    {student.risk_probability
+                      ? `(${student.risk_probability.toFixed(1)}%)`
+                      : ""}
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => deleteStudent(student._id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

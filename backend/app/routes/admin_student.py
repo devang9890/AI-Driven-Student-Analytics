@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from bson import ObjectId
 from pydantic import BaseModel
+from typing import List, Optional
 from app.db import students_collection, db
 import pandas as pd
 from io import BytesIO
@@ -35,15 +36,31 @@ alerts_collection = db["alerts"]
 router = APIRouter(prefix="/admin", tags=["Admin Student"])
 
 
+# NEW: Subject schema
+class Subject(BaseModel):
+    subject_name: str
+    marks: float
+
+
+# UPDATED: Student input with subjects array
 class StudentInput(BaseModel):
-	name: str
-	attendance: float
-	marks: float
-	behaviour: float
-	fees_paid: bool
+    name: str
+    attendance: float
+    behaviour: float
+    fees_paid: bool
+    subjects: List[Subject]
 
 
-def predict_risk(data: StudentInput):
+# Helper to calculate average marks
+def calculate_average_marks(subjects: List[dict]) -> float:
+    if not subjects:
+        return 0.0
+    total = sum(s.get("marks", 0) for s in subjects)
+    return round(total / len(subjects), 2)
+
+
+# Helper to predict risk using attendance, average_marks, behaviour
+def predict_risk(attendance: float, average_marks: float, behaviour: float):
     """
     Predict student risk level using ML model.
     Model output: 0=LOW RISK, 1=MEDIUM RISK, 2=HIGH RISK
@@ -54,7 +71,7 @@ def predict_risk(data: StudentInput):
             raise Exception("Model not loaded")
         
         # Prepare features: [attendance_percentage, average_marks, lms_score]
-        features = np.array([[data.attendance, data.marks, int(data.behaviour)]])
+        features = np.array([[attendance, average_marks, int(behaviour)]])
         
         # Get prediction and probability
         prediction = _model.predict(features)[0]  # Returns 0, 1, or 2
@@ -67,7 +84,7 @@ def predict_risk(data: StudentInput):
         # Get probability percentage (highest confidence)
         probability = float(probabilities[prediction]) * 100
         
-        print(f"ML PREDICTION: attendance={data.attendance}, marks={data.marks}, behaviour={int(data.behaviour)} -> {risk_label} ({probability:.1f}%)")
+        print(f"ML PREDICTION: attendance={attendance}, marks={average_marks}, behaviour={int(behaviour)} -> {risk_label} ({probability:.1f}%)")
         
         return {
             "risk_label": risk_label,
@@ -75,7 +92,7 @@ def predict_risk(data: StudentInput):
         }
     except Exception as e:
         print(f"ML PREDICTION ERROR: {e}. Falling back to rules.")
-        score = (data.attendance + data.marks + data.behaviour) / 3
+        score = (attendance + average_marks + behaviour) / 3
         risk_label = "HIGH RISK" if score < 50 else "LOW RISK"
         return {
             "risk_label": risk_label,
@@ -84,40 +101,177 @@ def predict_risk(data: StudentInput):
 
 
 
-
 @router.post("/add-student")
 async def add_student(data: StudentInput):
-	prediction = predict_risk(data)
-	risk_label = prediction["risk_label"]
-	probability = prediction["probability"]
+    # Convert subjects to dict format
+    subjects_list = [{"subject_name": s.subject_name, "marks": s.marks} for s in data.subjects]
+    
+    # Calculate average marks
+    average_marks = calculate_average_marks(subjects_list)
+    
+    # Predict risk
+    prediction = predict_risk(data.attendance, average_marks, data.behaviour)
+    risk_label = prediction["risk_label"]
+    probability = prediction["probability"]
 
-	student_doc = {
-		"name": data.name,
-		"attendance": data.attendance,
-		"marks": data.marks,
-		"behaviour": data.behaviour,
-		"fees_paid": data.fees_paid,
-		"risk_level": risk_label,
-		"risk_probability": probability,
-	}
+    student_doc = {
+        "name": data.name,
+        "attendance": data.attendance,
+        "behaviour": data.behaviour,
+        "fees_paid": data.fees_paid,
+        "subjects": subjects_list,
+        "average_marks": average_marks,
+        "risk_level": risk_label,
+        "risk_probability": probability,
+    }
 
-	await students_collection.insert_one(student_doc)
+    await students_collection.insert_one(student_doc)
 
-	# 🚨 ALERT SYSTEM
-	if risk_label == "HIGH RISK":
-		alert_doc = {
-			"student_name": data.name,
-			"risk_level": risk_label,
-			"risk_probability": probability,
-			"status": "ACTIVE",
-		}
-		await alerts_collection.insert_one(alert_doc)
+    # 🚨 ALERT SYSTEM
+    if risk_label == "HIGH RISK":
+        alert_doc = {
+            "student_name": data.name,
+            "risk_level": risk_label,
+            "risk_probability": probability,
+            "status": "ACTIVE",
+        }
+        await alerts_collection.insert_one(alert_doc)
 
-	return {
-		"message": f"Student {data.name} added successfully",
-		"risk_level": risk_label,
-		"probability": probability
-	}
+    return {
+        "message": f"Student {data.name} added successfully",
+        "risk_level": risk_label,
+        "probability": probability
+    }
+
+
+# NEW: Add subject to existing student
+@router.post("/add-subject/{student_id}")
+async def add_subject(student_id: str, subject: Subject):
+    try:
+        student = await students_collection.find_one({"_id": ObjectId(student_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid student id")
+    
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Get existing subjects or initialize
+    subjects = student.get("subjects", [])
+    
+    # Check if subject already exists
+    if any(s.get("subject_name") == subject.subject_name for s in subjects):
+        raise HTTPException(status_code=400, detail="Subject already exists")
+    
+    # Add new subject
+    subjects.append({"subject_name": subject.subject_name, "marks": subject.marks})
+    
+    # Recalculate average and prediction
+    average_marks = calculate_average_marks(subjects)
+    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    
+    # Update student
+    await students_collection.update_one(
+        {"_id": ObjectId(student_id)},
+        {"$set": {
+            "subjects": subjects,
+            "average_marks": average_marks,
+            "risk_level": prediction["risk_label"],
+            "risk_probability": prediction["probability"]
+        }}
+    )
+    
+    return {
+        "message": "Subject added successfully",
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"]
+    }
+
+
+# NEW: Update subject marks
+@router.put("/update-subject/{student_id}/{subject_name}")
+async def update_subject(student_id: str, subject_name: str, marks: float):
+    try:
+        student = await students_collection.find_one({"_id": ObjectId(student_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid student id")
+    
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    subjects = student.get("subjects", [])
+    
+    # Find and update subject
+    found = False
+    for s in subjects:
+        if s.get("subject_name") == subject_name:
+            s["marks"] = marks
+            found = True
+            break
+    
+    if not found:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    
+    # Recalculate average and prediction
+    average_marks = calculate_average_marks(subjects)
+    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    
+    # Update student
+    await students_collection.update_one(
+        {"_id": ObjectId(student_id)},
+        {"$set": {
+            "subjects": subjects,
+            "average_marks": average_marks,
+            "risk_level": prediction["risk_label"],
+            "risk_probability": prediction["probability"]
+        }}
+    )
+    
+    return {
+        "message": "Subject updated successfully",
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"]
+    }
+
+
+# NEW: Delete subject
+@router.delete("/delete-subject/{student_id}/{subject_name}")
+async def delete_subject(student_id: str, subject_name: str):
+    try:
+        student = await students_collection.find_one({"_id": ObjectId(student_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid student id")
+    
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    subjects = student.get("subjects", [])
+    
+    # Remove subject
+    subjects = [s for s in subjects if s.get("subject_name") != subject_name]
+    
+    if len(subjects) == len(student.get("subjects", [])):
+        raise HTTPException(status_code=404, detail="Subject not found")
+    
+    # Recalculate average and prediction
+    average_marks = calculate_average_marks(subjects)
+    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    
+    # Update student
+    await students_collection.update_one(
+        {"_id": ObjectId(student_id)},
+        {"$set": {
+            "subjects": subjects,
+            "average_marks": average_marks,
+            "risk_level": prediction["risk_label"],
+            "risk_probability": prediction["probability"]
+        }}
+    )
+    
+    return {
+        "message": "Subject deleted successfully",
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"]
+    }
 
 
 @router.get("/stats")
@@ -179,13 +333,29 @@ async def get_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     student["_id"] = str(student["_id"])
+    
+    # MIGRATION: handle old students with "marks" field
+    subjects = student.get("subjects", [])
+    if not subjects and "marks" in student:
+        subjects = [{"subject_name": "Overall", "marks": student["marks"]}]
+    
+    average_marks = student.get("average_marks")
+    if average_marks is None:
+        if subjects:
+            average_marks = calculate_average_marks(subjects)
+        elif "marks" in student:
+            average_marks = student["marks"]
+        else:
+            average_marks = 0
+    
     return {
         "_id": student.get("_id"),
         "name": student.get("name"),
         "attendance": student.get("attendance"),
-        "marks": student.get("marks"),
         "behaviour": student.get("behaviour"),
         "fees_paid": student.get("fees_paid"),
+        "subjects": subjects,
+        "average_marks": average_marks,
         "risk_level": student.get("risk_level"),
         "probability": student.get("risk_probability", student.get("probability")),
     }
@@ -202,47 +372,75 @@ async def delete_student(student_id: str):
 
 @router.post("/upload-excel")
 async def upload_excel(file: UploadFile = File(...)):
-
     try:
         df = pd.read_excel(file.file)
 
-        students_added = []
-
+        # Expected columns: name, attendance, behaviour, fees_paid, subject, marks
+        required_cols = ["name", "attendance", "behaviour", "fees_paid", "subject", "marks"]
+        
+        # Group by student name
+        students_dict = {}
+        
         for _, row in df.iterrows():
-
-            student_data = {
-                "name": str(row.get("name", "")),
-                "attendance": float(row.get("attendance", 0)),
-                "marks": float(row.get("marks", 0)),
-                "behaviour": float(row.get("behaviour", 0)),
-                "fees_paid": str(row.get("fees_paid", "False")).lower() == "true"
-            }
-
-            prediction = predict_risk(StudentInput(**student_data))
-            risk_label = prediction["risk_label"]
-            probability = prediction["probability"]
-
+            name = str(row.get("name", "")).strip()
+            if not name:
+                continue
+            
+            if name not in students_dict:
+                students_dict[name] = {
+                    "name": name,
+                    "attendance": float(row.get("attendance", 0)),
+                    "behaviour": float(row.get("behaviour", 0)),
+                    "fees_paid": str(row.get("fees_paid", "False")).lower() == "true",
+                    "subjects": []
+                }
+            
+            # Add subject
+            subject_name = str(row.get("subject", "")).strip()
+            subject_marks = float(row.get("marks", 0))
+            
+            if subject_name:
+                students_dict[name]["subjects"].append({
+                    "subject_name": subject_name,
+                    "marks": subject_marks
+                })
+        
+        students_added = []
+        
+        for name, student_data in students_dict.items():
+            # Calculate average marks
+            average_marks = calculate_average_marks(student_data["subjects"])
+            
+            # Predict risk
+            prediction = predict_risk(
+                student_data["attendance"],
+                average_marks,
+                student_data["behaviour"]
+            )
+            
             student_doc = {
                 **student_data,
-                "risk_level": risk_label,
-                "risk_probability": probability
+                "average_marks": average_marks,
+                "risk_level": prediction["risk_label"],
+                "risk_probability": prediction["probability"]
             }
 
             await students_collection.insert_one(student_doc)
 
-            if risk_label == "HIGH RISK":
+            if prediction["risk_label"] == "HIGH RISK":
                 await alerts_collection.insert_one({
-                    "student_name": student_data["name"],
-                    "risk_level": risk_label,
-                    "risk_probability": probability,
+                    "student_name": name,
+                    "risk_level": prediction["risk_label"],
+                    "risk_probability": prediction["probability"],
                     "status": "ACTIVE"
                 })
 
-            students_added.append(student_data["name"])
+            students_added.append(name)
 
         return {
             "message": "Excel processed successfully",
-            "count": len(students_added)
+            "count": len(students_added),
+            "students": students_added
         }
 
     except Exception as e:
