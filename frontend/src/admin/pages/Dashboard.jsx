@@ -46,7 +46,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             {alerts.map((alert) => (
               <div key={alert._id} className="bg-red-100 p-4 rounded-lg shadow">
-                ⚠️ {alert.student_name} is HIGH RISK
+                ⚠️ {alert.student_name} is HIGH RISK {alert.risk_probability ? `(${alert.risk_probability.toFixed(1)}%)` : ""}
               </div>
             ))}
           </div>

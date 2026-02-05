@@ -68,7 +68,7 @@ const Students = () => {
                 <td className="p-3 text-center">{student.marks}</td>
                 <td className="p-3 text-center">{student.behaviour}</td>
                 <td className="p-3 text-center font-bold">
-                  {student.risk_level}
+                  {student.risk_level} {student.risk_probability ? `(${student.risk_probability.toFixed(1)}%)` : ""}
                 </td>
               </tr>
             ))}

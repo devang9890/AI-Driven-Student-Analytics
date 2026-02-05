@@ -3,6 +3,30 @@ from pydantic import BaseModel
 from app.db import students_collection, db
 import pandas as pd
 from io import BytesIO
+import joblib
+import os
+import numpy as np
+
+# Load ML model
+_THIS_DIR = os.path.dirname(__file__)
+_MODEL_PATH = os.path.join(os.path.dirname(_THIS_DIR), "ml", "models", "risk_model.pkl")
+_ENCODER_PATH = os.path.join(os.path.dirname(_THIS_DIR), "ml", "models", "label_encoder.pkl")
+
+_model = None
+_label_encoder = None
+
+def _load_model():
+    global _model, _label_encoder
+    if _model is not None and _label_encoder is not None:
+        return
+    if os.path.exists(_MODEL_PATH) and os.path.exists(_ENCODER_PATH):
+        _model = joblib.load(_MODEL_PATH)
+        _label_encoder = joblib.load(_ENCODER_PATH)
+        print(f"ML Model loaded from {_MODEL_PATH}")
+    else:
+        print(f"Model not found at {_MODEL_PATH}")
+
+_load_model()
 
 # alerts collection from db
 alerts_collection = db["alerts"]
@@ -19,19 +43,52 @@ class StudentInput(BaseModel):
 
 
 def predict_risk(data: StudentInput):
-	score = (data.attendance + data.marks + data.behaviour) / 3
+    """
+    Predict student risk level using ML model.
+    Model output: 0=LOW RISK, 1=MEDIUM RISK, 2=HIGH RISK
+    Returns: {"risk_label": "...", "probability": 0.XX}
+    """
+    try:
+        if _model is None or _label_encoder is None:
+            raise Exception("Model not loaded")
+        
+        # Prepare features: [attendance_percentage, average_marks, lms_score]
+        features = np.array([[data.attendance, data.marks, int(data.behaviour)]])
+        
+        # Get prediction and probability
+        prediction = _model.predict(features)[0]  # Returns 0, 1, or 2
+        probabilities = _model.predict_proba(features)[0]  # Returns [prob_0, prob_1, prob_2]
+        
+        # Map numeric prediction to risk label
+        risk_map = {0: "LOW RISK", 1: "MEDIUM RISK", 2: "HIGH RISK"}
+        risk_label = risk_map.get(prediction, "LOW RISK")
+        
+        # Get probability percentage (highest confidence)
+        probability = float(probabilities[prediction]) * 100
+        
+        print(f"ML PREDICTION: attendance={data.attendance}, marks={data.marks}, behaviour={int(data.behaviour)} -> {risk_label} ({probability:.1f}%)")
+        
+        return {
+            "risk_label": risk_label,
+            "probability": probability
+        }
+    except Exception as e:
+        print(f"ML PREDICTION ERROR: {e}. Falling back to rules.")
+        score = (data.attendance + data.marks + data.behaviour) / 3
+        risk_label = "HIGH RISK" if score < 50 else "LOW RISK"
+        return {
+            "risk_label": risk_label,
+            "probability": 50.0
+        }
 
-	if score < 40:
-		return "HIGH RISK"
-	elif score < 70:
-		return "MEDIUM RISK"
-	else:
-		return "LOW RISK"
+
 
 
 @router.post("/add-student")
 async def add_student(data: StudentInput):
-	risk = predict_risk(data)
+	prediction = predict_risk(data)
+	risk_label = prediction["risk_label"]
+	probability = prediction["probability"]
 
 	student_doc = {
 		"name": data.name,
@@ -39,23 +96,26 @@ async def add_student(data: StudentInput):
 		"marks": data.marks,
 		"behaviour": data.behaviour,
 		"fees_paid": data.fees_paid,
-		"risk_level": risk,
+		"risk_level": risk_label,
+		"risk_probability": probability,
 	}
 
 	await students_collection.insert_one(student_doc)
 
 	# 🚨 ALERT SYSTEM
-	if risk == "HIGH RISK":
+	if risk_label == "HIGH RISK":
 		alert_doc = {
 			"student_name": data.name,
-			"risk_level": risk,
+			"risk_level": risk_label,
+			"risk_probability": probability,
 			"status": "ACTIVE",
 		}
 		await alerts_collection.insert_one(alert_doc)
 
 	return {
-		"message": "Student saved successfully",
-		"risk_level": risk,
+		"message": f"Student {data.name} added successfully",
+		"risk_level": risk_label,
+		"probability": probability
 	}
 
 
@@ -115,19 +175,23 @@ async def upload_excel(file: UploadFile = File(...)):
                 "fees_paid": str(row.get("fees_paid", "False")).lower() == "true"
             }
 
-            risk = predict_risk(StudentInput(**student_data))
+            prediction = predict_risk(StudentInput(**student_data))
+            risk_label = prediction["risk_label"]
+            probability = prediction["probability"]
 
             student_doc = {
                 **student_data,
-                "risk_level": risk
+                "risk_level": risk_label,
+                "risk_probability": probability
             }
 
             await students_collection.insert_one(student_doc)
 
-            if risk == "HIGH RISK":
+            if risk_label == "HIGH RISK":
                 await alerts_collection.insert_one({
                     "student_name": student_data["name"],
-                    "risk_level": risk,
+                    "risk_level": risk_label,
+                    "risk_probability": probability,
                     "status": "ACTIVE"
                 })
 

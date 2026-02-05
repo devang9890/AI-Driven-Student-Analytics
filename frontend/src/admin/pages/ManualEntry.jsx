@@ -32,8 +32,10 @@ const ManualEntry = () => {
         payload
       );
 
-      // Backend returns prediction.risk
-      alert("Risk Level: " + (res?.data?.prediction?.risk ?? "N/A"));
+      // Backend returns risk_level and probability
+      const riskLabel = res?.data?.risk_level ?? "N/A";
+      const probability = res?.data?.probability ?? 0;
+      alert(`Risk Level: ${riskLabel} (${probability.toFixed(1)}%)`);
     } catch (err) {
       alert("Error submitting data");
       console.error(err);
