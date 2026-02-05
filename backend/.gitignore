@@ -9,6 +9,7 @@ __pycache__/
 # ---------- FastAPI ----------
 *.sqlite3
 *.db
+*.db.py
 
 # ---------- Node / React ----------
 node_modules/
