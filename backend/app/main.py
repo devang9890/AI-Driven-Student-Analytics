@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import alerts
 
 # Database
 from app.database import engine, Base
@@ -51,6 +52,7 @@ app.add_middleware(
 app.include_router(student_routes.router)
 app.include_router(analytics_routes.router)
 app.include_router(prediction_routes.router)
+app.include_router(alerts.router)
 
 
 # --------------------------------------------------

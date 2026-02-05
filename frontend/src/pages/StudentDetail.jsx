@@ -5,9 +5,6 @@ import RiskBadge from "../components/RiskBadge";
 import LineChartCard from "../components/LineChartCard";
 
 
-// Trend data state (fetched from backend)
-
-
 // -----------------------------
 // Component
 // -----------------------------
@@ -17,6 +14,8 @@ export default function StudentDetail() {
   const [summary, setSummary] = useState(null);
   const [predictedRisk, setPredictedRisk] = useState(null);
   const [decline, setDecline] = useState(null);
+  const [alert, setAlert] = useState(null);
+
   const [attendanceData, setAttendanceData] = useState([]);
   const [marksData, setMarksData] = useState([]);
   const [lmsData, setLmsData] = useState([]);
@@ -24,10 +23,13 @@ export default function StudentDetail() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Core analytics
         const summaryRes = await api.get(`/analytics/summary/${id}`);
         const predictionRes = await api.get(`/prediction/risk/${id}`);
         const declineRes = await api.get(`/analytics/decline/${id}`);
+        const alertRes = await api.get(`/alerts/check/${id}`);
 
+        // Trend data
         const attendanceTrend = await api.get(`/analytics/attendance-trend/${id}`);
         const marksTrend = await api.get(`/analytics/marks-trend/${id}`);
         const lmsTrend = await api.get(`/analytics/lms-trend/${id}`);
@@ -35,6 +37,7 @@ export default function StudentDetail() {
         setSummary(summaryRes.data);
         setPredictedRisk(predictionRes.data.predicted_risk);
         setDecline(declineRes.data);
+        setAlert(alertRes.data);
 
         setAttendanceData(attendanceTrend.data);
         setMarksData(marksTrend.data);
@@ -121,6 +124,20 @@ export default function StudentDetail() {
               <li>Marks are showing a downward trend</li>
             )}
           </ul>
+        </div>
+      )}
+
+
+      {/* ---------------- Early Alert System ---------------- */}
+      {alert?.alert && (
+        <div className="mt-6 p-4 rounded-xl bg-red-100 border border-red-300">
+          <h3 className="font-bold text-red-700">
+            🚨 Early Warning Alert
+          </h3>
+
+          <p className="text-red-600 mt-1">
+            {alert.message}
+          </p>
         </div>
       )}
 
