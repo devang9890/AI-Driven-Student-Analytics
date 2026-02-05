@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from app.db import students_collection, db
+import pandas as pd
+from io import BytesIO
 
 # alerts collection from db
 alerts_collection = db["alerts"]
@@ -94,3 +96,47 @@ async def get_students(risk: str | None = None):
 		students.append(student)
 
 	return students
+
+@router.post("/upload-excel")
+async def upload_excel(file: UploadFile = File(...)):
+
+    try:
+        df = pd.read_excel(file.file)
+
+        students_added = []
+
+        for _, row in df.iterrows():
+
+            student_data = {
+                "name": str(row.get("name", "")),
+                "attendance": float(row.get("attendance", 0)),
+                "marks": float(row.get("marks", 0)),
+                "behaviour": float(row.get("behaviour", 0)),
+                "fees_paid": str(row.get("fees_paid", "False")).lower() == "true"
+            }
+
+            risk = predict_risk(StudentInput(**student_data))
+
+            student_doc = {
+                **student_data,
+                "risk_level": risk
+            }
+
+            await students_collection.insert_one(student_doc)
+
+            if risk == "HIGH RISK":
+                await alerts_collection.insert_one({
+                    "student_name": student_data["name"],
+                    "risk_level": risk,
+                    "status": "ACTIVE"
+                })
+
+            students_added.append(student_data["name"])
+
+        return {
+            "message": "Excel processed successfully",
+            "count": len(students_added)
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
