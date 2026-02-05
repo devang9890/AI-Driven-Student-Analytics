@@ -21,6 +21,10 @@ const Sidebar = () => {
         <Link to="/admin/students" className="hover:text-blue-400">
           Students
         </Link>
+
+        <Link to="/alerts" className="hover:text-blue-400">
+          Alerts
+        </Link>
       </nav>
     </div>
   );

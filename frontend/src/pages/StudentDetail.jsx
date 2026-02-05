@@ -18,6 +18,9 @@ export default function StudentDetail() {
   const [student, setStudent] = useState(null);
   const [editingSubject, setEditingSubject] = useState(null);
   const [newSubject, setNewSubject] = useState({ subject_name: "", marks: "" });
+  const [notes, setNotes] = useState([]);
+  const [noteAuthor, setNoteAuthor] = useState("Admin");
+  const [noteContent, setNoteContent] = useState("");
 
   const fetchStudent = async () => {
     try {
@@ -28,8 +31,18 @@ export default function StudentDetail() {
     }
   };
 
+  const fetchNotes = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/students/${id}/notes`);
+      setNotes(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchStudent();
+    fetchNotes();
   }, [id]);
 
   const probability = Number(student?.probability ?? 0);
@@ -95,6 +108,34 @@ export default function StudentDetail() {
       alert("Subject deleted successfully");
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to delete subject");
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!noteAuthor || !noteContent.trim()) {
+      alert("Please enter author and note content");
+      return;
+    }
+
+    try {
+      await axios.post(`http://localhost:8000/students/${id}/notes`, {
+        author: noteAuthor,
+        content: noteContent.trim(),
+      });
+      setNoteContent("");
+      fetchNotes();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to add note");
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm("Delete this note?")) return;
+    try {
+      await axios.delete(`http://localhost:8000/notes/${noteId}`);
+      setNotes((prev) => prev.filter((n) => n._id !== noteId));
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to delete note");
     }
   };
 
@@ -282,6 +323,59 @@ export default function StudentDetail() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Faculty Notes */}
+      <div className="bg-white rounded-2xl shadow-md p-6 mt-8">
+        <h3 className="font-semibold mb-4">Faculty Notes</h3>
+
+        <div className="bg-gray-50 p-4 rounded-xl mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+            <input
+              value={noteAuthor}
+              onChange={(e) => setNoteAuthor(e.target.value)}
+              placeholder="Author"
+              className="p-2 border rounded md:col-span-1"
+            />
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Write a note..."
+              className="p-2 border rounded md:col-span-3"
+              rows={2}
+            />
+          </div>
+          <button
+            onClick={handleAddNote}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Add Note
+          </button>
+        </div>
+
+        {notes.length === 0 ? (
+          <p className="text-gray-500">No notes yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {notes.map((note) => (
+              <div key={note._id} className="border-l-4 border-blue-500 pl-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">{note.author}</p>
+                  <button
+                    onClick={() => handleDeleteNote(note._id)}
+                    className="text-red-500 text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <p className="text-gray-700 text-sm mt-1">{note.content}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {note.created_at ? new Date(note.created_at).toLocaleString() : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

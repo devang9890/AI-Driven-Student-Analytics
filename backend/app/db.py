@@ -9,3 +9,5 @@ _db = _client[DB_NAME]
 db = _db  # export for routers to access collections
 
 students_collection = _db["students"]
+alerts_collection = _db["alerts"]
+notes_collection = _db["notes"]

@@ -2,7 +2,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from bson import ObjectId
 from pydantic import BaseModel
 from typing import List, Optional
-from app.db import students_collection, db
+from app.db import students_collection, alerts_collection, db
+from app.services.alert_service import generate_alerts_for_student
 import pandas as pd
 from io import BytesIO
 import joblib
@@ -29,9 +30,6 @@ def _load_model():
         print(f"Model not found at {_MODEL_PATH}")
 
 _load_model()
-
-# alerts collection from db
-alerts_collection = db["alerts"]
 
 router = APIRouter(prefix="/admin", tags=["Admin Student"])
 
@@ -125,17 +123,10 @@ async def add_student(data: StudentInput):
         "risk_probability": probability,
     }
 
-    await students_collection.insert_one(student_doc)
+    result = await students_collection.insert_one(student_doc)
+    student_doc["_id"] = result.inserted_id
 
-    # 🚨 ALERT SYSTEM
-    if risk_label == "HIGH RISK":
-        alert_doc = {
-            "student_name": data.name,
-            "risk_level": risk_label,
-            "risk_probability": probability,
-            "status": "ACTIVE",
-        }
-        await alerts_collection.insert_one(alert_doc)
+    await generate_alerts_for_student(student_after=student_doc)
 
     return {
         "message": f"Student {data.name} added successfully",
@@ -155,7 +146,10 @@ async def add_subject(student_id: str, subject: Subject):
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
+    student_before = dict(student)
     # Get existing subjects or initialize
+    student_before = dict(student)
+    student_before = dict(student)
     subjects = student.get("subjects", [])
     
     # Check if subject already exists
@@ -179,6 +173,36 @@ async def add_subject(student_id: str, subject: Subject):
             "risk_probability": prediction["probability"]
         }}
     )
+
+    student_after = {
+        **student_before,
+        "subjects": subjects,
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"],
+        "risk_probability": prediction["probability"]
+    }
+
+    await generate_alerts_for_student(student_after=student_after, student_before=student_before)
+
+    student_after = {
+        **student_before,
+        "subjects": subjects,
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"],
+        "risk_probability": prediction["probability"]
+    }
+
+    await generate_alerts_for_student(student_after=student_after, student_before=student_before)
+
+    student_after = {
+        **student_before,
+        "subjects": subjects,
+        "average_marks": average_marks,
+        "risk_level": prediction["risk_label"],
+        "risk_probability": prediction["probability"]
+    }
+
+    await generate_alerts_for_student(student_after=student_after, student_before=student_before)
     
     return {
         "message": "Subject added successfully",
@@ -291,12 +315,12 @@ async def get_dashboard_stats():
 
 @router.get("/alerts")
 async def get_alerts():
-	alerts = []
-	async for alert in alerts_collection.find({"status": "ACTIVE"}):
-		alert["_id"] = str(alert["_id"])  # stringify ObjectId
-		alerts.append(alert)
+    alerts = []
+    async for alert in alerts_collection.find().sort("created_at", -1):
+        alert["_id"] = str(alert["_id"])  # stringify ObjectId
+        alerts.append(alert)
 
-	return alerts
+    return alerts
 
 
 @router.get("/students")
@@ -425,15 +449,10 @@ async def upload_excel(file: UploadFile = File(...)):
                 "risk_probability": prediction["probability"]
             }
 
-            await students_collection.insert_one(student_doc)
+            insert_result = await students_collection.insert_one(student_doc)
+            student_doc["_id"] = insert_result.inserted_id
 
-            if prediction["risk_label"] == "HIGH RISK":
-                await alerts_collection.insert_one({
-                    "student_name": name,
-                    "risk_level": prediction["risk_label"],
-                    "risk_probability": prediction["probability"],
-                    "status": "ACTIVE"
-                })
+            await generate_alerts_for_student(student_after=student_doc)
 
             students_added.append(name)
 

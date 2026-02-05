@@ -4,6 +4,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Students from "./pages/Students";
 import StudentDetail from "./pages/StudentDetail";
 import Analytics from "./pages/Analytics";
+import Alerts from "./pages/Alerts";
 import Dashboard from "./admin/pages/Dashboard";
 import ManualEntry from "./admin/pages/ManualEntry";
 import ExcelUpload from "./admin/pages/ExcelUpload";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<Students />} />
           <Route path="/student/:id" element={<StudentDetail />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/alerts" element={<Alerts />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLogin />} />
