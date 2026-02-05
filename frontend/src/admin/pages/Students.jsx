@@ -20,6 +20,17 @@ const Students = () => {
     setStudents(res.data);
   };
 
+  const deleteStudent = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this student?")) return;
+
+    try {
+      await axios.delete(`http://localhost:8000/admin/delete-student/${id}`);
+      fetchStudents();
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
   }, []);
@@ -57,6 +68,7 @@ const Students = () => {
               <th className="p-3">Marks</th>
               <th className="p-3">Behaviour</th>
               <th className="p-3">Risk</th>
+              <th className="p-3">Action</th>
             </tr>
           </thead>
 
@@ -69,6 +81,14 @@ const Students = () => {
                 <td className="p-3 text-center">{student.behaviour}</td>
                 <td className="p-3 text-center font-bold">
                   {student.risk_level} {student.risk_probability ? `(${student.risk_probability.toFixed(1)}%)` : ""}
+                </td>
+                <td className="p-3 text-center">
+                  <button
+                    onClick={() => deleteStudent(student._id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}

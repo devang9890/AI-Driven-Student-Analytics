@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from bson import ObjectId
 from pydantic import BaseModel
 from app.db import students_collection, db
 import pandas as pd
@@ -156,6 +157,48 @@ async def get_students(risk: str | None = None):
 		students.append(student)
 
 	return students
+
+
+@router.get("/all-students")
+async def get_all_students():
+    students = []
+    async for student in students_collection.find():
+        student["_id"] = str(student["_id"])  # stringify ObjectId
+        students.append(student)
+    return students
+
+
+@router.get("/student/{student_id}")
+async def get_student(student_id: str):
+    try:
+        student = await students_collection.find_one({"_id": ObjectId(student_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid student id")
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    student["_id"] = str(student["_id"])
+    return {
+        "_id": student.get("_id"),
+        "name": student.get("name"),
+        "attendance": student.get("attendance"),
+        "marks": student.get("marks"),
+        "behaviour": student.get("behaviour"),
+        "fees_paid": student.get("fees_paid"),
+        "risk_level": student.get("risk_level"),
+        "probability": student.get("risk_probability", student.get("probability")),
+    }
+
+
+@router.delete("/delete-student/{student_id}")
+async def delete_student(student_id: str):
+    result = await students_collection.delete_one({"_id": ObjectId(student_id)})
+
+    if result.deleted_count == 1:
+        return {"message": "Student deleted successfully"}
+    else:
+        return {"error": "Student not found"}
 
 @router.post("/upload-excel")
 async def upload_excel(file: UploadFile = File(...)):

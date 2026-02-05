@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Students from "./pages/Students";
 import StudentDetail from "./pages/StudentDetail";
+import Analytics from "./pages/Analytics";
 import Dashboard from "./admin/pages/Dashboard";
 import ManualEntry from "./admin/pages/ManualEntry";
 import ExcelUpload from "./admin/pages/ExcelUpload";
@@ -10,17 +11,13 @@ import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AdminLogin from "./admin/pages/AdminLogin";
 import AdminStudents from "./admin/pages/Students";
 
-function Analytics() {
-  return <h2 className="text-xl font-bold">Analytics Coming Soon</h2>;
-}
-
 export default function App() {
   return (
     <Router>
       <DashboardLayout>
         <Routes>
           <Route path="/" element={<Students />} />
-          <Route path="/students/:id" element={<StudentDetail />} />
+          <Route path="/student/:id" element={<StudentDetail />} />
           <Route path="/analytics" element={<Analytics />} />
 
           {/* Admin routes */}

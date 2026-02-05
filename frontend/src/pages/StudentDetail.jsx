@@ -1,146 +1,151 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import api from "../api/axios";
+import axios from "axios";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  RadialBarChart,
+  RadialBar,
+} from "recharts";
 import RiskBadge from "../components/RiskBadge";
-import LineChartCard from "../components/LineChartCard";
 
-
-// -----------------------------
-// Component
-// -----------------------------
 export default function StudentDetail() {
   const { id } = useParams();
-
-  const [summary, setSummary] = useState(null);
-  const [predictedRisk, setPredictedRisk] = useState(null);
-  const [decline, setDecline] = useState(null);
-  const [alert, setAlert] = useState(null);
-
-  const [attendanceData, setAttendanceData] = useState([]);
-  const [marksData, setMarksData] = useState([]);
-  const [lmsData, setLmsData] = useState([]);
+  const [student, setStudent] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStudent = async () => {
       try {
-        // Core analytics
-        const summaryRes = await api.get(`/analytics/summary/${id}`);
-        const predictionRes = await api.get(`/prediction/risk/${id}`);
-        const declineRes = await api.get(`/analytics/decline/${id}`);
-        const alertRes = await api.get(`/alerts/check/${id}`);
-
-        // Trend data
-        const attendanceTrend = await api.get(`/analytics/attendance-trend/${id}`);
-        const marksTrend = await api.get(`/analytics/marks-trend/${id}`);
-        const lmsTrend = await api.get(`/analytics/lms-trend/${id}`);
-
-        setSummary(summaryRes.data);
-        setPredictedRisk(predictionRes.data.predicted_risk);
-        setDecline(declineRes.data);
-        setAlert(alertRes.data);
-
-        setAttendanceData(attendanceTrend.data);
-        setMarksData(marksTrend.data);
-        setLmsData(lmsTrend.data);
-
+        const res = await axios.get(`http://localhost:8000/admin/student/${id}`);
+        setStudent(res.data);
       } catch (err) {
         console.error(err);
       }
     };
 
-    fetchData();
+    fetchStudent();
   }, [id]);
 
-  if (!summary)
-    return <p className="p-6">Loading student data...</p>;
+  const probability = Number(student?.probability ?? student?.risk_probability ?? 0);
+
+  const scoreData = useMemo(
+    () => [
+      { name: "Attendance", value: Number(student?.attendance ?? 0) },
+      { name: "Marks", value: Number(student?.marks ?? 0) },
+      { name: "Behaviour", value: Number(student?.behaviour ?? 0) },
+    ],
+    [student]
+  );
+
+  const riskPie = useMemo(
+    () => [
+      { name: "Risk", value: probability },
+      { name: "Remaining", value: Math.max(0, 100 - probability) },
+    ],
+    [probability]
+  );
+
+  if (!student) return <p className="p-6">Loading student data...</p>;
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="bg-white p-6 rounded-2xl shadow-md mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{student.name}</h2>
+            <p className="text-gray-500">AI Student Risk Analytics</p>
+          </div>
+          <RiskBadge risk={student.risk_level} />
+        </div>
 
-      {/* ---------------- Summary Card ---------------- */}
-      <div className="bg-white p-6 rounded-xl shadow mb-8">
-        <h2 className="text-xl font-bold mb-4">
-          Student Analytics
-        </h2>
-
-        <div className="space-y-2 text-gray-700">
-          <p>
-            Attendance: <strong>{summary.attendance_percentage}%</strong>
-          </p>
-          <p>
-            Average Marks: <strong>{summary.average_marks}</strong>
-          </p>
-          <p>
-            LMS Score: <strong>{summary.lms_score}</strong>
-          </p>
-
-          <p>
-            Risk Level: <RiskBadge risk={summary.risk_hint} />
-          </p>
-
-          {predictedRisk && (
-            <p className="mt-2">
-              AI Predicted Risk: <RiskBadge risk={predictedRisk} />
-            </p>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-500">Probability</p>
+            <p className="text-xl font-semibold">{probability.toFixed(1)}%</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-500">Attendance</p>
+            <p className="text-xl font-semibold">{student.attendance}%</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-500">Marks</p>
+            <p className="text-xl font-semibold">{student.marks}</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-500">Behaviour</p>
+            <p className="text-xl font-semibold">{student.behaviour}</p>
+          </div>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-2xl shadow-md p-6">
+          <h3 className="font-semibold mb-4">Scores Overview</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={scoreData}>
+                <XAxis dataKey="name" />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-      {/* ---------------- Charts Section ---------------- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <LineChartCard
-          title="Attendance Trend"
-          data={attendanceData}
-          dataKey="value"
-        />
+        <div className="bg-white rounded-2xl shadow-md p-6">
+          <h3 className="font-semibold mb-4">Risk Probability</h3>
+          <div className="relative h-64 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="70%"
+                outerRadius="100%"
+                barSize={18}
+                data={[{ name: "Probability", value: probability }]}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <RadialBar dataKey="value" fill="#f59e0b" cornerRadius={10} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="absolute text-center">
+              <p className="text-2xl font-bold">{probability.toFixed(1)}%</p>
+              <p className="text-xs text-gray-500">Risk Probability</p>
+            </div>
+          </div>
+        </div>
 
-        <LineChartCard
-          title="Marks Trend"
-          data={marksData}
-          dataKey="value"
-        />
-
-        <LineChartCard
-          title="LMS Activity"
-          data={lmsData}
-          dataKey="value"
-        />
+        <div className="bg-white rounded-2xl shadow-md p-6">
+          <h3 className="font-semibold mb-4">Risk Breakdown</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={riskPie}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={2}
+                >
+                  <Cell fill="#ef4444" />
+                  <Cell fill="#e5e7eb" />
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
-
-
-      {/* ---------------- Decline Alert ---------------- */}
-      {decline?.overall_decline && (
-        <div className="mt-8 p-4 rounded-xl bg-red-50 border border-red-200">
-          <h3 className="font-semibold text-red-700">
-            ⚠ Performance Decline Detected
-          </h3>
-
-          <ul className="text-sm text-red-600 mt-2 list-disc list-inside">
-            {decline.attendance_decline && (
-              <li>Attendance is dropping over recent weeks</li>
-            )}
-            {decline.marks_decline && (
-              <li>Marks are showing a downward trend</li>
-            )}
-          </ul>
-        </div>
-      )}
-
-
-      {/* ---------------- Early Alert System ---------------- */}
-      {alert?.alert && (
-        <div className="mt-6 p-4 rounded-xl bg-red-100 border border-red-300">
-          <h3 className="font-bold text-red-700">
-            🚨 Early Warning Alert
-          </h3>
-
-          <p className="text-red-600 mt-1">
-            {alert.message}
-          </p>
-        </div>
-      )}
-
     </div>
   );
 }

@@ -1,33 +1,45 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import axios from "axios";
 import { Link } from "react-router-dom";
+import RiskBadge from "../components/RiskBadge";
 
-
-export default function Students() {
+const Students = () => {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
-    api.get("/students")
-      .then(res => setStudents(res.data))
-      .catch(err => console.error(err));
+    fetchStudents();
   }, []);
 
+  const fetchStudents = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/admin/all-students");
+      setStudents(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Students</h2>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-6">Students</h1>
 
-      <ul className="space-y-2">
-  {students.map(s => (
-    <Link
-      key={s.id}
-      to={`/students/${s.id}`}
-      className="block p-3 bg-white rounded shadow hover:bg-gray-100"
-    >
-      {s.name} — {s.department}
-    </Link>
-  ))}
-</ul>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {students.map((student) => (
+          <Link
+            key={student._id}
+            to={`/student/${student._id}`}
+            className="bg-white shadow-md rounded-2xl p-5 flex items-center justify-between hover:shadow-lg transition"
+          >
+            <div>
+              <p className="text-lg font-semibold text-gray-900">{student.name}</p>
+              <p className="text-sm text-gray-500">Attendance: {student.attendance}%</p>
+            </div>
+            <RiskBadge risk={student.risk_level} />
+          </Link>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default Students;
