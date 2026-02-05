@@ -112,3 +112,65 @@ def performance_decline(
         "overall_decline": attendance_decline or marks_decline
     }
 
+# -----------------------------
+# Attendance trend
+# -----------------------------
+@router.get("/attendance-trend/{student_id}")
+def attendance_trend(student_id: int, db: Session = Depends(get_db)):
+    records = (
+        db.query(Attendance)
+        .filter(Attendance.student_id == student_id)
+        .order_by(Attendance.date)
+        .all()
+    )
+
+    return [
+        {
+            "label": r.date.strftime("%d %b"),
+            "value": 1 if r.present else 0,
+        }
+        for r in records
+    ]
+
+
+# -----------------------------
+# Marks trend
+# -----------------------------
+@router.get("/marks-trend/{student_id}")
+def marks_trend(student_id: int, db: Session = Depends(get_db)):
+    records = (
+        db.query(Marks)
+        .filter(Marks.student_id == student_id)
+        .order_by(Marks.exam_date)
+        .all()
+    )
+
+    return [
+        {
+            "label": r.subject,
+            "value": r.score,
+        }
+        for r in records
+    ]
+
+
+# -----------------------------
+# LMS activity trend
+# -----------------------------
+@router.get("/lms-trend/{student_id}")
+def lms_trend(student_id: int, db: Session = Depends(get_db)):
+    records = (
+        db.query(LMSActivity)
+        .filter(LMSActivity.student_id == student_id)
+        .order_by(LMSActivity.week)
+        .all()
+    )
+
+    return [
+        {
+            "label": f"Week {r.week}",
+            "value": r.login_count + r.assignments_submitted,
+        }
+        for r in records
+    ]
+
