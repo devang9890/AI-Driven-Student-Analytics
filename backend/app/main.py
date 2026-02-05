@@ -21,7 +21,7 @@ from app.routes import (
     prediction as prediction_routes,
 )
 from app.routes.admin_auth import router as admin_router
-
+from app.routes.admin_student import router as admin_student_router
 # --------------------------------------------------
 # FastAPI App
 # --------------------------------------------------
@@ -55,6 +55,7 @@ app.include_router(analytics_routes.router)
 app.include_router(prediction_routes.router)
 app.include_router(alerts.router)
 app.include_router(admin_router)
+app.include_router(admin_student_router)
 
 
 # --------------------------------------------------
