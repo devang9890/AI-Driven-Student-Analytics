@@ -8,6 +8,7 @@ import ManualEntry from "./admin/pages/ManualEntry";
 import ExcelUpload from "./admin/pages/ExcelUpload";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AdminLogin from "./admin/pages/AdminLogin";
+import AdminStudents from "./admin/pages/Students";
 
 function Analytics() {
   return <h2 className="text-xl font-bold">Analytics Coming Soon</h2>;
@@ -29,6 +30,14 @@ export default function App() {
             element={
               <AdminProtectedRoute>
                 <Dashboard />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students"
+            element={
+              <AdminProtectedRoute>
+                <AdminStudents />
               </AdminProtectedRoute>
             }
           />

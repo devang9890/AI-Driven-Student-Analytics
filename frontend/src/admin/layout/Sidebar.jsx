@@ -17,6 +17,10 @@ const Sidebar = () => {
         <Link to="/admin/excel-upload" className="hover:text-blue-400">
           Excel Upload
         </Link>
+
+        <Link to="/admin/students" className="hover:text-blue-400">
+          Students
+        </Link>
       </nav>
     </div>
   );

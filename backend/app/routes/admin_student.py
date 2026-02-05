@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from app.db import students_collection
+from app.db import students_collection, db
+
+# alerts collection from db
+alerts_collection = db["alerts"]
 
 router = APIRouter(prefix="/admin", tags=["Admin Student"])
 
@@ -39,6 +42,15 @@ async def add_student(data: StudentInput):
 
 	await students_collection.insert_one(student_doc)
 
+	# 🚨 ALERT SYSTEM
+	if risk == "HIGH RISK":
+		alert_doc = {
+			"student_name": data.name,
+			"risk_level": risk,
+			"status": "ACTIVE",
+		}
+		await alerts_collection.insert_one(alert_doc)
+
 	return {
 		"message": "Student saved successfully",
 		"risk_level": risk,
@@ -58,3 +70,27 @@ async def get_dashboard_stats():
 		"medium_risk": medium_risk,
 		"low_risk": low_risk,
 	}
+
+
+@router.get("/alerts")
+async def get_alerts():
+	alerts = []
+	async for alert in alerts_collection.find({"status": "ACTIVE"}):
+		alert["_id"] = str(alert["_id"])  # stringify ObjectId
+		alerts.append(alert)
+
+	return alerts
+
+
+@router.get("/students")
+async def get_students(risk: str | None = None):
+	query = {}
+	if risk:
+		query["risk_level"] = risk
+
+	students = []
+	async for student in students_collection.find(query):
+		student["_id"] = str(student["_id"])  # stringify ObjectId
+		students.append(student)
+
+	return students

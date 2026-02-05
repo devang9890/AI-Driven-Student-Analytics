@@ -6,5 +6,6 @@ DB_NAME = os.getenv("MONGO_DB", "student_risk")
 
 _client = AsyncIOMotorClient(MONGO_URL)
 _db = _client[DB_NAME]
+db = _db  # export for routers to access collections
 
 students_collection = _db["students"]
