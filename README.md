@@ -34,7 +34,7 @@ RiskSense is an **AI-powered education analytics platform** that helps instituti
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page](screenshots/home.png)
+![Home Page](screenshots/Home.png)
 *Landing page with AI logic explanation*
 
 ### Login Portal
