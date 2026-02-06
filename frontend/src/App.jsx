@@ -12,12 +12,13 @@ import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AdminLogin from "./admin/pages/AdminLogin";
 import AdminStudents from "./admin/pages/Students";
 import AdminAlerts from "./admin/pages/Alerts";
+import WelcomePage from "./pages/WelcomePage";
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<WelcomePage />} />
         <Route path="/login" element={<AdminLogin />} />
 
         {/* Admin routes */}

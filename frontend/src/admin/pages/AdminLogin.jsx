@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
 const AdminLogin = () => {
@@ -73,6 +73,14 @@ const AdminLogin = () => {
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-800 text-center mb-2">Administrator Access</h2>
             <p className="text-gray-500 text-sm text-center">Faculty & Administrative Portal</p>
+            <div className="mt-4 flex justify-center">
+              <Link
+                to="/"
+                className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                ← Back to Home
+              </Link>
+            </div>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
