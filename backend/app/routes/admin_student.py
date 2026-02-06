@@ -1,53 +1,32 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from bson import ObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from app.db import students_collection, alerts_collection, db
 from app.routes.admin_auth import get_current_admin
 from app.services.alert_service import generate_alerts_for_student
+from app.ml.predictor import predict_student
 import pandas as pd
 from io import BytesIO
-import joblib
-import os
-import numpy as np
-
-# Load ML model
-_THIS_DIR = os.path.dirname(__file__)
-_MODEL_PATH = os.path.join(os.path.dirname(_THIS_DIR), "ml", "models", "risk_model.pkl")
-_ENCODER_PATH = os.path.join(os.path.dirname(_THIS_DIR), "ml", "models", "label_encoder.pkl")
-
-_model = None
-_label_encoder = None
-
-def _load_model():
-    global _model, _label_encoder
-    if _model is not None and _label_encoder is not None:
-        return
-    if os.path.exists(_MODEL_PATH) and os.path.exists(_ENCODER_PATH):
-        _model = joblib.load(_MODEL_PATH)
-        _label_encoder = joblib.load(_ENCODER_PATH)
-        print(f"ML Model loaded from {_MODEL_PATH}")
-    else:
-        print(f"Model not found at {_MODEL_PATH}")
-
-_load_model()
 
 router = APIRouter(prefix="/admin", tags=["Admin Student"], dependencies=[Depends(get_current_admin)])
 
 
 # NEW: Subject schema
 class Subject(BaseModel):
-    subject_name: str
+    subject_name: str = Field(..., alias="subject")
     marks: float
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # UPDATED: Student input with subjects array
 class StudentInput(BaseModel):
-    name: str
+    name: str = Field(..., alias="student_name")
     attendance: float
     behaviour: float
-    fees_paid: bool
+    fees_paid: Optional[bool] = False
     subjects: List[Subject]
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # Helper to calculate average marks
@@ -58,45 +37,13 @@ def calculate_average_marks(subjects: List[dict]) -> float:
     return round(total / len(subjects), 2)
 
 
-# Helper to predict risk using attendance, average_marks, behaviour
-def predict_risk(attendance: float, average_marks: float, behaviour: float):
-    """
-    Predict student risk level using ML model.
-    Model output: 0=LOW RISK, 1=MEDIUM RISK, 2=HIGH RISK
-    Returns: {"risk_label": "...", "probability": 0.XX}
-    """
-    try:
-        if _model is None or _label_encoder is None:
-            raise Exception("Model not loaded")
-        
-        # Prepare features: [attendance_percentage, average_marks, lms_score]
-        features = np.array([[attendance, average_marks, int(behaviour)]])
-        
-        # Get prediction and probability
-        prediction = _model.predict(features)[0]  # Returns 0, 1, or 2
-        probabilities = _model.predict_proba(features)[0]  # Returns [prob_0, prob_1, prob_2]
-        
-        # Map numeric prediction to risk label
-        risk_map = {0: "LOW RISK", 1: "MEDIUM RISK", 2: "HIGH RISK"}
-        risk_label = risk_map.get(prediction, "LOW RISK")
-        
-        # Get probability percentage (highest confidence)
-        probability = float(probabilities[prediction]) * 100
-        
-        print(f"ML PREDICTION: attendance={attendance}, marks={average_marks}, behaviour={int(behaviour)} -> {risk_label} ({probability:.1f}%)")
-        
-        return {
-            "risk_label": risk_label,
-            "probability": probability
-        }
-    except Exception as e:
-        print(f"ML PREDICTION ERROR: {e}. Falling back to rules.")
-        score = (attendance + average_marks + behaviour) / 3
-        risk_label = "HIGH RISK" if score < 50 else "LOW RISK"
-        return {
-            "risk_label": risk_label,
-            "probability": 50.0
-        }
+def _map_label_to_risk_level(label: str) -> str:
+    label_upper = (label or "").upper()
+    if label_upper == "HIGH":
+        return "HIGH RISK"
+    if label_upper == "MEDIUM":
+        return "MEDIUM RISK"
+    return "LOW RISK"
 
 
 
@@ -104,14 +51,16 @@ def predict_risk(attendance: float, average_marks: float, behaviour: float):
 async def add_student(data: StudentInput):
     # Convert subjects to dict format
     subjects_list = [{"subject_name": s.subject_name, "marks": s.marks} for s in data.subjects]
-    
-    # Calculate average marks
-    average_marks = calculate_average_marks(subjects_list)
-    
-    # Predict risk
-    prediction = predict_risk(data.attendance, average_marks, data.behaviour)
-    risk_label = prediction["risk_label"]
-    probability = prediction["probability"]
+
+    # Predict risk using ML
+    subject_marks = [s["marks"] for s in subjects_list]
+    prediction = predict_student(data.attendance, data.behaviour, subject_marks)
+    predicted_label = prediction["predicted_label"]
+    confidence_score = prediction["confidence_score"]
+    average_marks = prediction["avg_marks"]
+
+    risk_level = _map_label_to_risk_level(predicted_label)
+    probability = confidence_score
 
     student_doc = {
         "name": data.name,
@@ -120,7 +69,9 @@ async def add_student(data: StudentInput):
         "fees_paid": data.fees_paid,
         "subjects": subjects_list,
         "average_marks": average_marks,
-        "risk_level": risk_label,
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level,
         "risk_probability": probability,
     }
 
@@ -131,7 +82,10 @@ async def add_student(data: StudentInput):
 
     return {
         "message": f"Student {data.name} added successfully",
-        "risk_level": risk_label,
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "avg_marks": average_marks,
+        "risk_level": risk_level,
         "probability": probability
     }
 
@@ -161,8 +115,12 @@ async def add_subject(student_id: str, subject: Subject):
     subjects.append({"subject_name": subject.subject_name, "marks": subject.marks})
     
     # Recalculate average and prediction
-    average_marks = calculate_average_marks(subjects)
-    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    subject_marks = [s.get("marks", 0) for s in subjects]
+    prediction = predict_student(student["attendance"], student["behaviour"], subject_marks)
+    predicted_label = prediction["predicted_label"]
+    confidence_score = prediction["confidence_score"]
+    average_marks = prediction["avg_marks"]
+    risk_level = _map_label_to_risk_level(predicted_label)
     
     # Update student
     await students_collection.update_one(
@@ -170,8 +128,10 @@ async def add_subject(student_id: str, subject: Subject):
         {"$set": {
             "subjects": subjects,
             "average_marks": average_marks,
-            "risk_level": prediction["risk_label"],
-            "risk_probability": prediction["probability"]
+            "predicted_label": predicted_label,
+            "confidence_score": confidence_score,
+            "risk_level": risk_level,
+            "risk_probability": confidence_score,
         }}
     )
 
@@ -179,8 +139,10 @@ async def add_subject(student_id: str, subject: Subject):
         **student_before,
         "subjects": subjects,
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"],
-        "risk_probability": prediction["probability"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level,
+        "risk_probability": confidence_score,
     }
 
     await generate_alerts_for_student(student_after=student_after, student_before=student_before)
@@ -189,8 +151,10 @@ async def add_subject(student_id: str, subject: Subject):
         **student_before,
         "subjects": subjects,
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"],
-        "risk_probability": prediction["probability"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level,
+        "risk_probability": confidence_score,
     }
 
     await generate_alerts_for_student(student_after=student_after, student_before=student_before)
@@ -199,8 +163,10 @@ async def add_subject(student_id: str, subject: Subject):
         **student_before,
         "subjects": subjects,
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"],
-        "risk_probability": prediction["probability"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level,
+        "risk_probability": confidence_score,
     }
 
     await generate_alerts_for_student(student_after=student_after, student_before=student_before)
@@ -208,7 +174,9 @@ async def add_subject(student_id: str, subject: Subject):
     return {
         "message": "Subject added successfully",
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level
     }
 
 
@@ -237,8 +205,12 @@ async def update_subject(student_id: str, subject_name: str, marks: float):
         raise HTTPException(status_code=404, detail="Subject not found")
     
     # Recalculate average and prediction
-    average_marks = calculate_average_marks(subjects)
-    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    subject_marks = [s.get("marks", 0) for s in subjects]
+    prediction = predict_student(student["attendance"], student["behaviour"], subject_marks)
+    predicted_label = prediction["predicted_label"]
+    confidence_score = prediction["confidence_score"]
+    average_marks = prediction["avg_marks"]
+    risk_level = _map_label_to_risk_level(predicted_label)
     
     # Update student
     await students_collection.update_one(
@@ -246,15 +218,19 @@ async def update_subject(student_id: str, subject_name: str, marks: float):
         {"$set": {
             "subjects": subjects,
             "average_marks": average_marks,
-            "risk_level": prediction["risk_label"],
-            "risk_probability": prediction["probability"]
+            "predicted_label": predicted_label,
+            "confidence_score": confidence_score,
+            "risk_level": risk_level,
+            "risk_probability": confidence_score,
         }}
     )
     
     return {
         "message": "Subject updated successfully",
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level
     }
 
 
@@ -278,8 +254,12 @@ async def delete_subject(student_id: str, subject_name: str):
         raise HTTPException(status_code=404, detail="Subject not found")
     
     # Recalculate average and prediction
-    average_marks = calculate_average_marks(subjects)
-    prediction = predict_risk(student["attendance"], average_marks, student["behaviour"])
+    subject_marks = [s.get("marks", 0) for s in subjects]
+    prediction = predict_student(student["attendance"], student["behaviour"], subject_marks)
+    predicted_label = prediction["predicted_label"]
+    confidence_score = prediction["confidence_score"]
+    average_marks = prediction["avg_marks"]
+    risk_level = _map_label_to_risk_level(predicted_label)
     
     # Update student
     await students_collection.update_one(
@@ -287,15 +267,19 @@ async def delete_subject(student_id: str, subject_name: str):
         {"$set": {
             "subjects": subjects,
             "average_marks": average_marks,
-            "risk_level": prediction["risk_label"],
-            "risk_probability": prediction["probability"]
+            "predicted_label": predicted_label,
+            "confidence_score": confidence_score,
+            "risk_level": risk_level,
+            "risk_probability": confidence_score,
         }}
     )
     
     return {
         "message": "Subject deleted successfully",
         "average_marks": average_marks,
-        "risk_level": prediction["risk_label"]
+        "predicted_label": predicted_label,
+        "confidence_score": confidence_score,
+        "risk_level": risk_level
     }
 
 

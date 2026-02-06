@@ -1,7 +1,9 @@
 import os
-from typing import Union, Tuple
+from typing import List, Tuple, Union
+
 import joblib
 import numpy as np
+
 from app.services.risk_service import get_risk_hint
 
 _THIS_DIR = os.path.dirname(__file__)
@@ -53,3 +55,38 @@ def predict_risk_with_confidence(
         pass
 
     return get_risk_hint(attendance_pct, avg_marks, lms_score), 0.5
+
+
+def predict_student(
+    attendance: Union[int, float],
+    behaviour: Union[int, float],
+    subject_marks: List[Union[int, float]]
+) -> dict:
+    """Predict risk label with confidence for a student using subject marks list."""
+    avg_marks = 0.0
+    if subject_marks:
+        avg_marks = float(sum(subject_marks)) / len(subject_marks)
+
+    try:
+        _load_artifacts()
+        if _model is None or _label_encoder is None:
+            raise Exception("Model not loaded")
+
+        features = np.array([[float(attendance), float(avg_marks), float(behaviour)]])
+        prediction = _model.predict(features)[0]
+        probs = _model.predict_proba(features)[0]
+        confidence = float(np.max(probs)) * 100
+        label = _label_encoder.inverse_transform([prediction])[0]
+
+        return {
+            "predicted_label": label,
+            "confidence_score": round(confidence, 2),
+            "avg_marks": round(avg_marks, 2),
+        }
+    except Exception:
+        fallback_label = get_risk_hint(attendance, avg_marks, int(behaviour))
+        return {
+            "predicted_label": fallback_label,
+            "confidence_score": 50.0,
+            "avg_marks": round(avg_marks, 2),
+        }

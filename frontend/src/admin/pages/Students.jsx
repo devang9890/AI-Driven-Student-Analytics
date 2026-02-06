@@ -56,10 +56,10 @@ const Students = () => {
         <button
           onClick={() => fetchStudents("HIGH RISK")}
           className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-            filter === "HIGH RISK" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700 border-gray-200 hover:border-red-400"
+            filter === "HIGH RISK" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-400"
           }`}
         >
-          High Risk
+          Needs Attention
         </button>
 
         <button
@@ -68,7 +68,7 @@ const Students = () => {
             filter === "MEDIUM RISK" ? "bg-yellow-500 text-white border-yellow-500" : "bg-white text-gray-700 border-gray-200 hover:border-yellow-400"
           }`}
         >
-          Medium Risk
+          Monitor
         </button>
 
         <button
@@ -77,7 +77,7 @@ const Students = () => {
             filter === "LOW RISK" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-700 border-gray-200 hover:border-green-400"
           }`}
         >
-          Low Risk
+          Stable
         </button>
       </div>
 
@@ -91,7 +91,7 @@ const Students = () => {
               <th className="p-4 text-sm font-semibold text-gray-600">Avg Marks</th>
               <th className="p-4 text-sm font-semibold text-gray-600">Attendance</th>
               <th className="p-4 text-sm font-semibold text-gray-600">Behaviour</th>
-              <th className="p-4 text-sm font-semibold text-gray-600">Risk</th>
+              <th className="p-4 text-sm font-semibold text-gray-600">AI Score</th>
               <th className="p-4 text-sm font-semibold text-gray-600">Action</th>
             </tr>
           </thead>
@@ -109,10 +109,9 @@ const Students = () => {
                   <td className="p-4 text-center text-gray-700">{student.attendance}</td>
                   <td className="p-4 text-center text-gray-700">{student.behaviour}</td>
                   <td className="p-4 text-center font-semibold text-gray-900">
-                    {student.risk_level}{" "}
                     {student.risk_probability
-                      ? `(${student.risk_probability.toFixed(1)}%)`
-                      : ""}
+                      ? `${student.risk_probability.toFixed(0)}%`
+                      : "N/A"}
                   </td>
                   <td className="p-4 text-center">
                     <button

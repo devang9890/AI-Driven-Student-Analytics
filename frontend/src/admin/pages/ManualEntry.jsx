@@ -66,7 +66,7 @@ const ManualEntry = () => {
 
     try {
       const payload = {
-        name: form.name,
+        student_name: form.name,
         attendance: parseFloat(form.attendance),
         behaviour: parseFloat(form.behaviour),
         fees_paid: !!form.fees_paid,
@@ -75,12 +75,19 @@ const ManualEntry = () => {
 
       const res = await api.post("/admin/add-student", payload);
 
-      const riskLabel = res?.data?.risk_level ?? "N/A";
-      const probability = res?.data?.probability ?? 0;
+      const predictedLabel = res?.data?.predicted_label ?? res?.data?.risk_level ?? "";
+      const confidence = res?.data?.confidence_score ?? res?.data?.probability ?? 0;
+      const normalized = Number(confidence) <= 1 ? Number(confidence) * 100 : Number(confidence);
+      const status = (() => {
+        const label = String(predictedLabel).toUpperCase();
+        if (label.includes("HIGH")) return "Needs Attention";
+        if (label.includes("MEDIUM")) return "Monitor";
+        if (label.includes("LOW")) return "Stable";
+        return "Stable";
+      })();
+
       alert(
-        `Student added successfully!\nRisk Level: ${riskLabel} (${probability.toFixed(
-          1
-        )}%)`
+        `Student added successfully!\nAcademic Status: ${status}\nConfidence Score: ${normalized.toFixed(1)}%`
       );
 
       // Reset form
@@ -101,7 +108,7 @@ const ManualEntry = () => {
     <AdminLayout>
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Manual Student Entry</h2>
-        <p className="text-gray-600">Add student records and generate risk insights</p>
+        <p className="text-gray-600">Add student records and generate AI insights</p>
       </div>
 
       <div className="glass-card p-6 rounded-2xl max-w-3xl">
@@ -204,7 +211,7 @@ const ManualEntry = () => {
           onClick={handleSubmit}
           className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-6 py-3 rounded-lg w-full font-semibold shadow hover:shadow-lg transition"
         >
-          Submit & Predict Risk
+          Submit & Generate Insights
         </button>
       </div>
     </AdminLayout>

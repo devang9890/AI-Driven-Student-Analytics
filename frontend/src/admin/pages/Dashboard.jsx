@@ -34,27 +34,27 @@ const Dashboard = () => {
           <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats.total_students}</h3>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-rose-100 rounded-2xl shadow-md p-6 border border-red-100">
-          <p className="text-sm text-red-700">High Risk</p>
-          <h3 className="text-3xl font-bold mt-2 text-red-700">{stats.high_risk}</h3>
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-md p-6 border border-blue-100">
+          <p className="text-sm text-blue-700">Needs Attention</p>
+          <h3 className="text-3xl font-bold mt-2 text-blue-700">{stats.high_risk}</h3>
         </div>
 
         <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-2xl shadow-md p-6 border border-yellow-100">
-          <p className="text-sm text-yellow-700">Medium Risk</p>
+          <p className="text-sm text-yellow-700">Monitor</p>
           <h3 className="text-3xl font-bold mt-2 text-yellow-700">{stats.medium_risk}</h3>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl shadow-md p-6 border border-green-100">
-          <p className="text-sm text-green-700">Low Risk</p>
+          <p className="text-sm text-green-700">Stable</p>
           <h3 className="text-3xl font-bold mt-2 text-green-700">{stats.low_risk}</h3>
         </div>
 
         <Link
           to="/admin/alerts"
-          className="bg-gradient-to-br from-red-100 to-rose-200 rounded-2xl shadow-md p-6 border border-rose-200 hover:shadow-lg transition"
+          className="bg-gradient-to-br from-blue-100 to-indigo-200 rounded-2xl shadow-md p-6 border border-indigo-200 hover:shadow-lg transition"
         >
-          <div className="text-sm text-red-700">High Risk Alerts Today</div>
-          <h3 className="text-3xl font-bold mt-2 text-red-700">{highRiskToday}</h3>
+          <div className="text-sm text-blue-700">Priority Alerts Today</div>
+          <h3 className="text-3xl font-bold mt-2 text-blue-700">{highRiskToday}</h3>
         </Link>
       </div>
 

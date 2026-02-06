@@ -1,26 +1,27 @@
+import os
+
+import joblib
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
-import joblib
-import os
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+
+_THIS_DIR = os.path.dirname(__file__)
+DATASET_PATH = os.path.join(_THIS_DIR, "data", "risksense_1500_students_dataset.xlsx")
+MODEL_DIR = os.path.join(_THIS_DIR, "models")
+MODEL_PATH = os.path.join(MODEL_DIR, "risk_model.pkl")
+ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.pkl")
 
 
 # -----------------------------
 # Load dataset
 # -----------------------------
-DATASET_PATH = "student_risk_dataset.csv"
+df = pd.read_excel(DATASET_PATH)
 
-df = pd.read_csv(DATASET_PATH)
-
-X = df[[
-    "attendance_percentage",
-    "average_marks",
-    "lms_score"
-]]
-
-y = df["risk"]
+X = df[["attendance", "avg_marks", "behaviour"]]
+y = df["risk_label"]
 
 
 # -----------------------------
@@ -41,11 +42,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # -----------------------------
 # Train model
 # -----------------------------
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
-
+model = RandomForestClassifier(n_estimators=200, random_state=42)
 model.fit(X_train, y_train)
 
 
@@ -62,9 +59,9 @@ print(classification_report(y_test, y_pred, target_names=label_encoder.classes_)
 # -----------------------------
 # Save model + encoder
 # -----------------------------
-os.makedirs("models", exist_ok=True)
+os.makedirs(MODEL_DIR, exist_ok=True)
 
-joblib.dump(model, "models/risk_model.pkl")
-joblib.dump(label_encoder, "models/label_encoder.pkl")
+joblib.dump(model, MODEL_PATH)
+joblib.dump(label_encoder, ENCODER_PATH)
 
 print("\nModel and encoder saved successfully ✅")

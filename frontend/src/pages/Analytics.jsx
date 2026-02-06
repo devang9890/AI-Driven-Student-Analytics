@@ -56,9 +56,9 @@ const Analytics = () => {
 
   const riskPie = useMemo(
     () => [
-      { name: "HIGH RISK", value: riskCounts.high },
-      { name: "MEDIUM RISK", value: riskCounts.medium },
-      { name: "LOW RISK", value: riskCounts.low },
+      { name: "Needs Attention", value: riskCounts.high },
+      { name: "Monitor", value: riskCounts.medium },
+      { name: "Stable", value: riskCounts.low },
     ],
     [riskCounts]
   );
@@ -80,16 +80,16 @@ const Analytics = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-red-50 to-rose-100 p-6 rounded-2xl shadow-md border border-red-100">
-          <p className="text-sm text-red-700">High Risk</p>
-          <p className="text-3xl font-semibold text-red-700">{riskCounts.high}</p>
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-2xl shadow-md border border-blue-100">
+          <p className="text-sm text-blue-700">Needs Attention</p>
+          <p className="text-3xl font-semibold text-blue-700">{riskCounts.high}</p>
         </div>
         <div className="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl shadow-md border border-yellow-100">
-          <p className="text-sm text-yellow-700">Medium Risk</p>
+          <p className="text-sm text-yellow-700">Monitor</p>
           <p className="text-3xl font-semibold text-yellow-700">{riskCounts.medium}</p>
         </div>
         <div className="bg-gradient-to-br from-emerald-50 to-green-100 p-6 rounded-2xl shadow-md border border-green-100">
-          <p className="text-sm text-green-700">Low Risk</p>
+          <p className="text-sm text-green-700">Stable</p>
           <p className="text-3xl font-semibold text-green-700">{riskCounts.low}</p>
         </div>
       </div>
@@ -110,7 +110,7 @@ const Analytics = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Average Risk Probability</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Average AI Confidence Score</h3>
           <div className="relative h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
@@ -134,7 +134,7 @@ const Analytics = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Risk Distribution</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Student Attention Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
