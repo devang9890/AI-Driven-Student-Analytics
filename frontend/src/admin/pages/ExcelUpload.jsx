@@ -1,11 +1,14 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import AdminLayout from "../layout/AdminLayout";
 
 const ExcelUpload = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState(null);
   const fileInputRef = useRef();
+  const navigate = useNavigate();
 
   // open file explorer manually
   const openFilePicker = () => {
@@ -16,6 +19,7 @@ const ExcelUpload = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
+    setResult(null); // Clear previous results
   };
 
   // upload excel
@@ -30,22 +34,28 @@ const ExcelUpload = () => {
 
     try {
       setUploading(true);
+      setResult(null);
 
-      await api.post("/admin/upload-excel", formData, {
+      const response = await api.post("/admin/upload-excel", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      alert("Upload successful!");
+      setResult(response.data);
       setFile(null);
+      
+      // Auto-navigate to students page after 2 seconds
+      setTimeout(() => {
+        navigate("/admin/students");
+      }, 2000);
+      
     } catch (err) {
       console.error(err);
-      alert(
-        err?.response?.data?.detail ||
+      const errorMsg = err?.response?.data?.detail ||
         err?.response?.data?.error ||
-        "Upload failed. Check file format and columns."
-      );
+        "Upload failed. Check file format and columns.";
+      setResult({ error: errorMsg });
     } finally {
       setUploading(false);
     }
@@ -132,6 +142,41 @@ const ExcelUpload = () => {
           <p className="text-emerald-600 mb-4 text-sm">
             Selected file: <strong>{file.name}</strong>
           </p>
+        )}
+
+        {/* Show upload results */}
+        {result && (
+          <div className={`mb-4 p-4 rounded-xl border ${
+            result.error 
+              ? "bg-red-50 border-red-200" 
+              : "bg-green-50 border-green-200"
+          }`}>
+            {result.error ? (
+              <p className="text-red-700 text-sm font-semibold">{result.error}</p>
+            ) : (
+              <div>
+                <p className="text-green-700 font-semibold mb-2">
+                  {result.message}
+                </p>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p>✅ Added: {result.students_added} students</p>
+                  <p>🔄 Updated: {result.students_updated} students</p>
+                  <p>📊 Total Processed: {result.total_processed}</p>
+                  {result.errors && result.errors.length > 0 && (
+                    <div className="mt-2 bg-yellow-50 p-2 rounded">
+                      <p className="font-semibold">Warnings:</p>
+                      {result.errors.map((err, idx) => (
+                        <p key={idx} className="text-xs">{err}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-green-600 mt-2">
+                  Redirecting to students page...
+                </p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* upload */}

@@ -20,14 +20,16 @@ const Students = () => {
     setStudents(res.data);
   };
 
-  const deleteStudent = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
+  const deleteStudent = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete ${name}?\n\nThis will permanently remove the student from:\n- Students database\n- All alerts\n- All notes`)) return;
 
     try {
-      await api.delete(`/admin/delete-student/${id}`);
-      fetchStudents();
+      const response = await api.delete(`/admin/delete-student/${id}`);
+      alert(response.data.message || "Student deleted successfully");
+      fetchStudents(); // Refresh the list
     } catch (err) {
-      alert("Delete failed");
+      console.error(err);
+      alert(err?.response?.data?.detail || "Delete failed");
     }
   };
 
@@ -115,7 +117,7 @@ const Students = () => {
                   </td>
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => deleteStudent(student._id)}
+                      onClick={() => deleteStudent(student._id, student.name)}
                       className="bg-gradient-to-r from-red-500 to-rose-600 text-white px-3 py-1.5 rounded-lg text-sm shadow hover:shadow-md transition"
                     >
                       Delete
